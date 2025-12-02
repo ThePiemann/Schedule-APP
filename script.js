@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    loadTheme(); // Load theme preference first
+    loadTheme(); 
     initCalendar();
     initWeekCounter();
     loadTodos();
     updateDateTime();
-    setInterval(updateDateTime, 1000);
+    
+    // Update both Clock and Countdowns every second
+    setInterval(() => {
+        updateDateTime();
+        updateCountdowns();
+    }, 1000);
+    
     loadSchedule();
     setupEventListeners();
 });
@@ -13,10 +19,9 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const startHour = 7; 
 const endHour = 20;
 
-// State Variables
 let currentSelectedSlot = null;
 let tempTodoText = ""; 
-let tempPriority = "med"; // default
+let tempPriority = "med"; 
 
 // --- Initialization & Events ---
 
@@ -40,7 +45,7 @@ function setupEventListeners() {
     document.getElementById('cancelTodoBtn').addEventListener('click', closeTodoModal);
     document.getElementById('saveTodoDetailsBtn').addEventListener('click', finalizeAddTodo);
 
-    // Priority Selection in Modal
+    // Priority Selection
     document.querySelectorAll('.p-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected'));
@@ -49,13 +54,13 @@ function setupEventListeners() {
         });
     });
 
-    // Click outside modals to close
+    // Close Modals on Outside Click
     window.addEventListener('click', (e) => {
         if (e.target === document.getElementById('eventModal')) closeEventModal();
         if (e.target === document.getElementById('todoModal')) closeTodoModal();
     });
     
-    // NEW: Theme Toggle Listener
+    // Theme Toggle
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
         themeToggle.addEventListener('change', toggleTheme);
@@ -63,29 +68,23 @@ function setupEventListeners() {
 }
 
 // --- Theme Logic ---
-
 function loadTheme() {
     const isDarkMode = localStorage.getItem('isDarkMode') === 'true';
     if (isDarkMode) {
         document.body.classList.add('dark-mode');
-        // Set the toggle switch state
         const toggle = document.getElementById('themeToggle');
         if (toggle) toggle.checked = true;
     }
 }
-
 function toggleTheme() {
     const isDarkMode = document.body.classList.toggle('dark-mode');
     localStorage.setItem('isDarkMode', isDarkMode);
 }
 
-
-// --- Schedule Logic (Smart Colors) ---
-
+// --- Schedule Logic ---
 function initCalendar() {
     const grid = document.getElementById('calendarGrid');
     
-    // Header
     const timeHeader = document.createElement('div');
     timeHeader.className = 'header-cell';
     timeHeader.innerText = 'Time';
@@ -97,7 +96,6 @@ function initCalendar() {
         grid.appendChild(d);
     });
 
-    // Slots
     for (let hour = startHour; hour <= endHour; hour++) {
         const tLabel = document.createElement('div');
         tLabel.className = 'time-label';
@@ -135,7 +133,9 @@ function closeEventModal() {
 function saveEventFromModal() {
     if (!currentSelectedSlot) return;
     const input = document.getElementById('eventInput');
-    const rawText = input.value.trim();
+    
+    // UPDATE: Force Uppercase for Grid
+    const rawText = input.value.trim().toUpperCase();
     
     const day = currentSelectedSlot.dataset.day;
     const hour = currentSelectedSlot.dataset.hour;
@@ -146,17 +146,13 @@ function saveEventFromModal() {
         return;
     }
 
-    // 1. Determine Color (Case Insensitive Reuse)
     const color = getSubjectColor(rawText);
 
-    // 2. Update UI
     currentSelectedSlot.innerText = rawText;
     currentSelectedSlot.style.backgroundColor = color;
     currentSelectedSlot.classList.add('filled');
 
-    // 3. Save to Storage
     localStorage.setItem(key, rawText);
-    
     closeEventModal();
 }
 
@@ -165,28 +161,21 @@ function deleteEventFromModal() {
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
     
     currentSelectedSlot.innerText = "";
-    currentSelectedSlot.style.backgroundColor = ""; // Reset to default slot BG
+    currentSelectedSlot.style.backgroundColor = ""; 
     currentSelectedSlot.classList.remove('filled');
     localStorage.removeItem(key);
     closeEventModal();
 }
 
-// --- COLOR LOGIC ---
-// This function ensures "Math" and "math" get same color
 function getSubjectColor(text) {
     const normalizeKey = text.trim().toLowerCase();
-    
-    // Retrieve existing map from storage
     let colorMap = JSON.parse(localStorage.getItem('subjectColors')) || {};
     
     if (colorMap[normalizeKey]) {
         return colorMap[normalizeKey];
     } else {
-        // Generate new color
         const hue = Math.floor(Math.random() * 360);
         const newColor = `hsl(${hue}, 90%, 85%)`;
-        
-        // Save to map
         colorMap[normalizeKey] = newColor;
         localStorage.setItem('subjectColors', JSON.stringify(colorMap));
         return newColor;
@@ -201,7 +190,6 @@ function loadSchedule() {
         if (savedText) {
             slot.innerText = savedText;
             slot.classList.add('filled');
-            // Re-apply the subject-specific color
             slot.style.backgroundColor = getSubjectColor(savedText);
         }
     });
@@ -213,32 +201,33 @@ function initiateAddTodo() {
     const input = document.getElementById('todoInput');
     const text = input.value.trim();
     if (text === "") return;
-
     tempTodoText = text;
     
-    // Reset Modal Fields
     document.getElementById('todoModalTaskName').innerText = `Adding: "${text}"`;
     document.getElementById('todoDateInput').value = "";
     tempPriority = "med";
     document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('.p-btn.med')?.classList.add('selected');
 
-    // Show Modal
     document.getElementById('todoModal').style.display = 'flex';
 }
 
 function closeTodoModal() {
     document.getElementById('todoModal').style.display = 'none';
-    document.getElementById('todoInput').value = ""; // Clear main input
+    document.getElementById('todoInput').value = ""; 
 }
 
 function finalizeAddTodo() {
     const dateVal = document.getElementById('todoDateInput').value;
     
+    // Store both display string and raw ISO for calculation
+    const deadlineObj = dateVal ? new Date(dateVal) : null;
+    
     const todoObj = {
         id: Date.now(),
         text: tempTodoText,
-        deadline: dateVal ? new Date(dateVal).toLocaleString() : "No Deadline",
+        deadlineISO: deadlineObj ? deadlineObj.toISOString() : "",
+        deadlineText: deadlineObj ? deadlineObj.toLocaleString() : "No Deadline",
         priority: tempPriority
     };
 
@@ -252,6 +241,8 @@ function createTodoElement(todoObj) {
     const li = document.createElement('li');
     li.className = `todo-item p-${todoObj.priority}`;
     li.dataset.id = todoObj.id;
+    // Persist ISO date in DOM for saving/loading and Countdown
+    li.dataset.deadlineIso = todoObj.deadlineISO || ""; 
 
     li.innerHTML = `
         <div class="todo-header">
@@ -262,12 +253,13 @@ function createTodoElement(todoObj) {
             </div>
         </div>
         <div class="todo-details">
-            <strong>Deadline:</strong> ${todoObj.deadline} <br>
+            <strong>Deadline:</strong> ${todoObj.deadlineText} 
+            <span class="countdown-timer">--:--:--</span>
+            <br>
             <strong>Priority:</strong> ${todoObj.priority.toUpperCase()}
         </div>
     `;
 
-    // Event Listeners for buttons inside this LI
     const infoBtn = li.querySelector('.info-btn');
     const detailsDiv = li.querySelector('.todo-details');
     
@@ -287,18 +279,22 @@ function createTodoElement(todoObj) {
     });
 
     list.appendChild(li);
+    updateCountdowns(); // Update immediately upon creation
 }
 
+// UPDATE: Improved Save/Load to include exact deadlineISO
 function saveTodos() {
     const todos = [];
     document.querySelectorAll('.todo-item').forEach(li => {
         const title = li.querySelector('.todo-title').innerText;
-        const details = li.querySelector('.todo-details').innerHTML;
+        // Parse visible text for display restoration
+        const details = li.querySelector('.todo-details');
+        const deadlineTextLine = details.innerHTML.match(/Deadline:<\/strong> (.*?) <span/); 
+        const deadlineText = deadlineTextLine ? deadlineTextLine[1].trim() : "No Deadline";
         
-        // Extracting deadline text:
-        const deadlineText = details.split('Deadline:</strong> ')[1].split(' <br>')[0];
-        
-        // Extracting priority class:
+        // Get raw data
+        const deadlineISO = li.dataset.deadlineIso;
+
         let p = "med";
         if (li.classList.contains('p-high')) p = "high";
         if (li.classList.contains('p-low')) p = "low";
@@ -306,7 +302,8 @@ function saveTodos() {
         todos.push({
             id: li.dataset.id,
             text: title,
-            deadline: deadlineText,
+            deadlineText: deadlineText,
+            deadlineISO: deadlineISO,
             priority: p
         });
     });
@@ -317,11 +314,59 @@ function loadTodos() {
     const stored = localStorage.getItem('advancedTodos');
     if (stored) {
         const todos = JSON.parse(stored);
-        todos.forEach(obj => createTodoElement(obj));
+        todos.forEach(obj => {
+            // Backward compatibility for old saved items without ISO
+            if (!obj.deadlineISO && obj.deadline !== "No Deadline") {
+                // Try to guess from text (not perfect but helpful)
+                const d = new Date(obj.deadline); 
+                if (!isNaN(d)) obj.deadlineISO = d.toISOString();
+            }
+            // Use old property name 'deadline' if new 'deadlineText' missing
+            if (!obj.deadlineText) obj.deadlineText = obj.deadline;
+            
+            createTodoElement(obj);
+        });
     }
 }
 
-// --- Week Counter (Same as before) ---
+// --- NEW: Countdown Functionality ---
+function updateCountdowns() {
+    const now = new Date();
+    
+    document.querySelectorAll('.todo-item').forEach(li => {
+        const iso = li.dataset.deadlineIso;
+        const timerSpan = li.querySelector('.countdown-timer');
+        
+        if (!iso || !timerSpan) {
+            if (timerSpan) timerSpan.style.display = 'none'; // Hide if no deadline
+            return;
+        }
+
+        const deadline = new Date(iso);
+        const diff = deadline - now;
+
+        if (diff <= 0) {
+            timerSpan.innerText = "00h:00m:00s";
+            timerSpan.style.color = "#e74c3c"; // Red for expired
+        } else {
+            const totalSeconds = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            // Format to 00h:00m:00s
+            const hStr = hours.toString().padStart(2, '0');
+            const mStr = minutes.toString().padStart(2, '0');
+            const sStr = seconds.toString().padStart(2, '0');
+            
+            timerSpan.innerText = `${hStr}h:${mStr}m:${sStr}s`;
+            timerSpan.style.display = 'inline-block';
+            timerSpan.style.color = "#fff";
+        }
+    });
+}
+
+// --- Week Counter ---
 function initWeekCounter() {
     const today = new Date();
     const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -346,11 +391,9 @@ function updateDateTime() {
     const display = document.getElementById('datetimeDisplay');
     const now = new Date();
     
-    // Formatting the date (e.g., Tuesday, Dec 2, 2025)
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
     const formattedDate = now.toLocaleDateString('en-US', dateOptions);
 
-    // Formatting the time (e.g., 5:51:05 PM)
     const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
     const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
 
