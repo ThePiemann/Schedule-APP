@@ -119,11 +119,18 @@ function loadTheme() {
   if (isDark) document.body.classList.add('dark-mode');
   const toggle = document.getElementById('themeToggle');
   if (toggle) toggle.checked = isDark;
+  updateThemeLabel(isDark);
 }
 
 function toggleTheme() {
   const enabled = document.body.classList.toggle('dark-mode');
   localStorage.setItem('isDarkMode', enabled);
+  updateThemeLabel(enabled);
+}
+
+function updateThemeLabel(isDark) {
+  const label = document.getElementById('themeModeLabel');
+  if (label) label.textContent = isDark ? 'Dark' : 'Light';
 }
 
 function loadSidebarState() {

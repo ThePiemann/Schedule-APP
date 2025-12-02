@@ -13,6 +13,10 @@
     <div class="app-container">
         <!-- Sidebar: Todo List -->
         <aside class="sidebar">
+            <div class="theme-toggle-container" id="themeToggleContainer">
+                <input type="checkbox" id="themeToggle" class="toggle-switch">
+                <span id="themeModeLabel" class="theme-mode-label">Light</span>
+            </div>
             <h2>To-Do List</h2>
             <div class="input-group">
                 <input type="text" id="todoInput" placeholder="New Task...">
@@ -21,11 +25,6 @@
             <ul id="todoList">
                 </ul>
             
-            <!-- NEW: Dark Mode Toggle -->
-            <div class="theme-toggle-container">
-                <label for="themeToggle" class="toggle-label">Dark Mode</label>
-                <input type="checkbox" id="themeToggle" class="toggle-switch">
-            </div>
 
         </aside>
         <div class="mobile-backdrop" id="mobileBackdrop"></div>
@@ -33,7 +32,13 @@
         <!-- Main Content: Schedule -->
         <main class="main-content">
             <header class="top-bar">
-                <button id="mobileMenuBtn" class="btn-icon mobile-menu-btn">☰</button>
+                <div class="menu-bar">
+                    <button id="mobileMenuBtn" class="btn-icon mobile-menu-btn">
+                        <span class="hamburger-icon"></span>
+                    </button>
+                    <!-- Room for menu and theme toggle -->
+                    <div class="menu-spacer"></div>
+                </div>
                 
                 <h1>My Class Schedule</h1>
                 
