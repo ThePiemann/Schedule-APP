@@ -11,6 +11,7 @@
 <body>
 
     <div class="app-container">
+        <!-- Sidebar: Todo List -->
         <aside class="sidebar">
             <h2>To-Do List</h2>
             <div class="input-group">
@@ -19,11 +20,22 @@
             </div>
             <ul id="todoList">
                 </ul>
+            
+            <!-- NEW: Dark Mode Toggle -->
+            <div class="theme-toggle-container">
+                <label for="themeToggle" class="toggle-label">Dark Mode</label>
+                <input type="checkbox" id="themeToggle" class="toggle-switch">
+            </div>
+
         </aside>
 
+        <!-- Main Content: Schedule -->
         <main class="main-content">
             <header class="top-bar">
                 <h1>My Class Schedule</h1>
+                <div class="datetime-display" id="datetimeDisplay">
+                    Loading...
+                </div>
                 <div class="week-display" id="weekDisplay">
                     Checking Week...
                 </div>
@@ -36,6 +48,7 @@
         </main>
     </div>
 
+    <!-- MODAL 1: Schedule Slot Edit -->
     <div id="eventModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" id="closeEventModal">&times;</span>
@@ -48,6 +61,7 @@
         </div>
     </div>
 
+    <!-- MODAL 2: Todo Details -->
     <div id="todoModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" id="closeTodoModal">&times;</span>

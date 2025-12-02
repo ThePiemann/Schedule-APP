@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    loadTheme(); // Load theme preference first
     initCalendar();
     initWeekCounter();
     loadTodos();
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
     loadSchedule();
     setupEventListeners();
 });
@@ -51,7 +54,31 @@ function setupEventListeners() {
         if (e.target === document.getElementById('eventModal')) closeEventModal();
         if (e.target === document.getElementById('todoModal')) closeTodoModal();
     });
+    
+    // NEW: Theme Toggle Listener
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('change', toggleTheme);
+    }
 }
+
+// --- Theme Logic ---
+
+function loadTheme() {
+    const isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        // Set the toggle switch state
+        const toggle = document.getElementById('themeToggle');
+        if (toggle) toggle.checked = true;
+    }
+}
+
+function toggleTheme() {
+    const isDarkMode = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('isDarkMode', isDarkMode);
+}
+
 
 // --- Schedule Logic (Smart Colors) ---
 
@@ -129,8 +156,6 @@ function saveEventFromModal() {
 
     // 3. Save to Storage
     localStorage.setItem(key, rawText);
-    // We save the color map separately now, but for simplicity in this structure
-    // we just ensure the color persists by regenerating it correctly on load.
     
     closeEventModal();
 }
@@ -140,7 +165,7 @@ function deleteEventFromModal() {
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
     
     currentSelectedSlot.innerText = "";
-    currentSelectedSlot.style.backgroundColor = "white";
+    currentSelectedSlot.style.backgroundColor = ""; // Reset to default slot BG
     currentSelectedSlot.classList.remove('filled');
     localStorage.removeItem(key);
     closeEventModal();
@@ -176,6 +201,7 @@ function loadSchedule() {
         if (savedText) {
             slot.innerText = savedText;
             slot.classList.add('filled');
+            // Re-apply the subject-specific color
             slot.style.backgroundColor = getSubjectColor(savedText);
         }
     });
@@ -195,7 +221,7 @@ function initiateAddTodo() {
     document.getElementById('todoDateInput').value = "";
     tempPriority = "med";
     document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector('.p-btn.med').classList.add('selected');
+    document.querySelector('.p-btn.med')?.classList.add('selected');
 
     // Show Modal
     document.getElementById('todoModal').style.display = 'flex';
@@ -268,13 +294,6 @@ function saveTodos() {
     document.querySelectorAll('.todo-item').forEach(li => {
         const title = li.querySelector('.todo-title').innerText;
         const details = li.querySelector('.todo-details').innerHTML;
-        // Parse back content (simplified for storage)
-        // In a real app, you'd store the object in memory, but here we scrape HTML
-        // to keep it simple or use data attributes.
-        // Let's use the object reconstruction from DOM for simplicity here.
-        
-        // Actually, cleaner way is to scrape the raw data if stored in dataset, 
-        // but for this simple version, let's grab text.
         
         // Extracting deadline text:
         const deadlineText = details.split('Deadline:</strong> ')[1].split(' <br>')[0];
@@ -321,4 +340,19 @@ function initWeekCounter() {
         display.innerText = "Current Week: ODD";
         display.style.backgroundColor = "#e67e22"; 
     }
+}
+
+function updateDateTime() {
+    const display = document.getElementById('datetimeDisplay');
+    const now = new Date();
+    
+    // Formatting the date (e.g., Tuesday, Dec 2, 2025)
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedDate = now.toLocaleDateString('en-US', dateOptions);
+
+    // Formatting the time (e.g., 5:51:05 PM)
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+    const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
+
+    display.innerHTML = `${formattedDate} | ${formattedTime}`;
 }
