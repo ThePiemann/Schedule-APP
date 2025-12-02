@@ -28,11 +28,19 @@
             </div>
 
         </aside>
+        <div class="mobile-backdrop" id="mobileBackdrop"></div>
 
         <!-- Main Content: Schedule -->
         <main class="main-content">
             <header class="top-bar">
+                <button id="mobileMenuBtn" class="btn-icon mobile-menu-btn">☰</button>
+                
                 <h1>My Class Schedule</h1>
+                
+                <button id="desktopToggleBtn" class="btn-icon desktop-toggle-btn" title="Toggle To-Do List">
+                    &lt;&lt; 
+                </button>
+                
                 <div class="datetime-display" id="datetimeDisplay">
                     Loading...
                 </div>
@@ -73,9 +81,9 @@
             
             <label>Priority:</label>
             <div class="priority-selector">
-                <button class="p-btn high" data-priority="high">Urgent (Red)</button>
-                <button class="p-btn med" data-priority="med">Normal (Yellow)</button>
-                <button class="p-btn low" data-priority="low">Low (Green)</button>
+                <button class="p-btn high" data-priority="high">High</button>
+                <button class="p-btn med" data-priority="med">Medium</button>
+                <button class="p-btn low" data-priority="low">Low</button>
             </div>
 
             <div class="modal-actions">
