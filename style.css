@@ -573,7 +573,7 @@ body {
 
   /* top-bar adjustments */
   .top-bar { align-items: center; gap: 8px; padding-bottom: 8px; flex-shrink: 0; }
-  .top-bar h1 { font-size: 1.05rem; margin-right: auto; }
+  .top-bar h1 { font-size: 1.5rem; margin-right: auto; margin-top: 1.25rem; }
   .datetime-display, .week-display { font-size: 0.72rem; padding: 6px 10px; }
 
   /* Mobile drawer appearance */
@@ -621,6 +621,15 @@ body {
   /* small adjustments for the calendar's sticky overlap on phone */
   .time-label { z-index: 50; background-color: var(--app-bg); box-shadow: 2px 0 6px rgba(0,0,0,0.08); }
   .calendar-grid > .header-cell:first-child { z-index: 60 !important; background-color: #2c3e50; border-right: 1px solid #444; }
+  .datetime-display, .week-display{
+    margin: auto;
+  }
+  .hamburger-icon{
+    width: 24px;
+    height: 18px;
+    margin-top: 1.25rem;
+    margin-left: 5px;
+  }
 }
 
 /* ---------------------------
