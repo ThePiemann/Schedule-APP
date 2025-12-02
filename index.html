@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Schedule App</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ToDoListLogo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <h2>To-Do List</h2>
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="New Task...">
+                <button id="addTodoBtn">Add</button>
+            </div>
+            <ul id="todoList">
+                </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>My Class Schedule</h1>
+                <div class="week-display" id="weekDisplay">
+                    Checking Week...
+                </div>
+            </header>
+
+            <div class="calendar-wrapper">
+                <div class="calendar-grid" id="calendarGrid">
+                    </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="eventModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEventModal">&times;</span>
+            <h3 id="eventModalTitle">Edit Slot</h3>
+            <input type="text" id="eventInput" placeholder="Enter Subject (e.g. Math)">
+            <div class="modal-actions">
+                <button id="deleteEventBtn" class="btn-delete">Clear Slot</button>
+                <button id="saveEventBtn" class="btn-save">Save Class</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="todoModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" id="closeTodoModal">&times;</span>
+            <h3>Task Details</h3>
+            <p id="todoModalTaskName" class="modal-subtitle"></p>
+            
+            <label>Deadline Date & Time:</label>
+            <input type="datetime-local" id="todoDateInput">
+            
+            <label>Priority:</label>
+            <div class="priority-selector">
+                <button class="p-btn high" data-priority="high">Urgent (Red)</button>
+                <button class="p-btn med" data-priority="med">Normal (Yellow)</button>
+                <button class="p-btn low" data-priority="low">Low (Green)</button>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancelTodoBtn" class="btn-delete">Cancel</button>
+                <button id="saveTodoDetailsBtn" class="btn-save">Add Task</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
