@@ -1,103 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Schedule App</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>StudentDash</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4A90E2",
+              "bg-light": "#F8F9FA",
+              "bg-dark": "#111518",
+              "card-light": "#FFFFFF",
+              "card-dark": "#1C2227",
+            },
+            fontFamily: { "display": ["Inter", "sans-serif"] },
+          },
+        },
+      }
+    </script>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="ToDoListLogo.png" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
 
-    <div class="app-container">
-        <!-- Sidebar: Todo List -->
-        <aside class="sidebar">
-            <div class="theme-toggle-container" id="themeToggleContainer">
-                <input type="checkbox" id="themeToggle" class="toggle-switch">
-                <span id="themeModeLabel" class="theme-mode-label">Light</span>
+    <header class="shrink-0 flex items-center justify-between px-6 py-4 bg-card-light dark:bg-card-dark border-b border-gray-200 dark:border-gray-700 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                <span class="material-symbols-outlined">school</span>
             </div>
-            <h2>To-Do List</h2>
-            <div class="input-group">
-                <input type="text" id="todoInput" placeholder="New Task...">
-                <button id="addTodoBtn">Add</button>
-            </div>
-            <ul id="todoList">
-                </ul>
+            <h1 class="text-xl font-bold tracking-tight">StudentDash</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
             
+            <!-- NEW SETTINGS GEAR ICON -->
+            <button id="settingsBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors" title="Settings">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+        </div>
+    </header>
 
-        </aside>
-        <div class="mobile-backdrop" id="mobileBackdrop"></div>
+    <main class="flex-1 flex overflow-hidden">
+        <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+            
+            <div class="flex justify-between items-end">
+                <h2 class="text-3xl font-black">Dashboard</h2>
+                <div id="weekDisplay" class="text-sm font-bold px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">Week Status</div>
+            </div>
 
-        <!-- Main Content: Schedule -->
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="menu-bar">
-                    <button id="mobileMenuBtn" class="btn-icon mobile-menu-btn">
-                        <span class="hamburger-icon"></span>
-                    </button>
-                    <!-- Room for menu and theme toggle -->
-                    <div class="menu-spacer"></div>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-10">
                 
-                <h1>My Class Schedule</h1>
-                
-                <button id="desktopToggleBtn" class="btn-icon desktop-toggle-btn" title="Toggle To-Do List">
-                    &lt;&lt; 
-                </button>
-                
-                <div class="datetime-display" id="datetimeDisplay">
-                    Loading...
-                </div>
-                <div class="week-display" id="weekDisplay">
-                    Checking Week...
-                </div>
-            </header>
+                <!-- Tasks -->
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-full">
+                        <h3 class="text-xl font-bold mb-4">My Tasks</h3>
+                        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-1 mb-4">
+                            <input type="text" id="todoInput" maxlength="25" class="w-full bg-transparent border-none focus:ring-0 p-3 text-sm" placeholder="Add task (max 25 chars)...">
+                            <div class="flex justify-between items-center px-3 pb-2 pt-1 border-t border-gray-200 dark:border-gray-700 mt-1">
+                                <span class="text-xs text-gray-400">Press Enter</span>
+                                <button id="addTodoBtn" class="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-md hover:bg-blue-600 transition">Add</button>
+                            </div>
+                        </div>
 
-            <div class="calendar-wrapper">
-                <div class="calendar-grid" id="calendarGrid">
+                        <div class="flex gap-2 mb-4">
+                            <button id="filterAllBtn" class="px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors">All</button>
+                            <button id="filterTodayBtn" class="px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors">Today</button>
+                        </div>
+
+                        <div id="todoList" class="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar min-h-[300px]"></div>
                     </div>
-            </div>
-        </main>
-    </div>
+                </div>
 
-    <!-- MODAL 1: Schedule Slot Edit -->
-    <div id="eventModal" class="modal-overlay">
-        <div class="modal-content">
-            <span class="close-btn" id="closeEventModal">&times;</span>
-            <h3 id="eventModalTitle">Edit Slot</h3>
-            <input type="text" id="eventInput" placeholder="Enter Subject (e.g. Math)">
-            <div class="modal-actions">
-                <button id="deleteEventBtn" class="btn-delete">Clear Slot</button>
-                <button id="saveEventBtn" class="btn-save">Save Class</button>
+                <!-- Schedule -->
+                <div class="lg:col-span-7 flex flex-col gap-6">
+                    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden relative">
+                        
+                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-card-light dark:bg-card-dark z-10">
+                            <div class="flex items-center gap-3">
+                                <h3 id="calendarTitle" class="text-lg font-bold">Class Schedule</h3>
+                                <div id="monthNav" class="flex gap-1 items-center">
+                                    <button id="prevMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+                                    <span id="currentMonthLabel" class="text-xs font-bold w-16 text-center">Oct 2023</span>
+                                    <button id="nextMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+                                </div>
+                            </div>
+                            <button id="toggleViewBtn" class="flex items-center gap-1 px-3 py-1 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition">
+                                <span class="material-symbols-outlined text-sm">edit_calendar</span>
+                                <span id="toggleBtnText">Edit</span>
+                            </button>
+                        </div>
+
+                        <!-- Month View -->
+                        <div id="monthView" class="p-4 transition-all duration-300">
+                            <div class="grid grid-cols-7 mb-2 text-center">
+                                <div class="text-[10px] font-bold text-gray-400">S</div>
+                                <div class="text-[10px] font-bold text-gray-400">M</div>
+                                <div class="text-[10px] font-bold text-gray-400">T</div>
+                                <div class="text-[10px] font-bold text-gray-400">W</div>
+                                <div class="text-[10px] font-bold text-gray-400">T</div>
+                                <div class="text-[10px] font-bold text-gray-400">F</div>
+                                <div class="text-[10px] font-bold text-gray-400">S</div>
+                            </div>
+                            <div id="monthGrid" class="grid grid-cols-7 gap-y-1 gap-x-0"></div>
+                            
+                            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <p id="overviewDateLabel" class="text-xs font-bold mb-2">Today's Schedule</p>
+                                <div id="dailyOverview" class="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Weekly Editor -->
+                        <div id="weekView" class="hidden h-[500px] flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+                            <div class="calendar-wrapper h-full overflow-auto">
+                                <div class="calendar-grid" id="calendarGrid"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
+        </div>
+    </main>
+    
+    <!-- SCHEDULE MODAL -->
+    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6">
+            <h3 class="text-lg font-bold mb-4">Edit Class Details</h3>
+            
+            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject</label>
+            <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math">
+            
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label>
+                    <input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label>
+                    <input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm">
+                </div>
+            </div>
+
+            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Location / Room</label>
+            <input type="text" id="locationInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-6 text-sm" placeholder="e.g. Science Bldg, Room 302">
+
+            <div class="flex gap-3">
+                <button id="deleteEventBtn" class="flex-1 px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm">Clear</button>
+                <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm">Save</button>
+            </div>
+            <button id="closeEventModal" class="absolute top-4 right-4 text-gray-400"><span class="material-symbols-outlined">close</span></button>
         </div>
     </div>
 
-    <!-- MODAL 2: Todo Details -->
-    <div id="todoModal" class="modal-overlay">
-        <div class="modal-content">
-            <span class="close-btn" id="closeTodoModal">&times;</span>
-            <h3>Task Details</h3>
-            <p id="todoModalTaskName" class="modal-subtitle"></p>
+    <!-- TASK MODAL -->
+    <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 id="todoModalTitle" class="text-lg font-bold mb-4">New Task</h3>
             
-            <label>Deadline Date & Time:</label>
-            <input type="datetime-local" id="todoDateInput">
+            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Task Name</label>
+            <input type="text" id="todoModalNameInput" maxlength="25" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 bg-transparent focus:ring-2 focus:ring-primary outline-none">
             
-            <label>Priority:</label>
-            <div class="priority-selector">
-                <button class="p-btn high" data-priority="high">High</button>
-                <button class="p-btn med" data-priority="med">Medium</button>
-                <button class="p-btn low" data-priority="low">Low</button>
+            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Deadline</label>
+            <input type="datetime-local" id="todoDateInput" class="w-full p-2 border rounded mb-4 bg-transparent border-gray-300 dark:border-gray-600">
+            
+            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Priority</label>
+            <div class="flex gap-2 mb-6">
+                <button class="p-btn high flex-1 py-1 text-xs font-bold border rounded bg-red-100 text-red-700" data-priority="high">High</button>
+                <button class="p-btn med flex-1 py-1 text-xs font-bold border rounded bg-yellow-100 text-yellow-700" data-priority="med">Med</button>
+                <button class="p-btn low flex-1 py-1 text-xs font-bold border rounded bg-green-100 text-green-700" data-priority="low">Low</button>
             </div>
-
-            <div class="modal-actions">
-                <button id="cancelTodoBtn" class="btn-delete">Cancel</button>
-                <button id="saveTodoDetailsBtn" class="btn-save">Add Task</button>
-            </div>
+            <button id="saveTodoDetailsBtn" class="w-full py-2 bg-primary text-white font-bold rounded">Save Task</button>
+            <button id="closeTodoModal" class="absolute top-4 right-4 text-gray-400"><span class="material-symbols-outlined">close</span></button>
         </div>
     </div>
 
+    <!-- NEW SETTINGS MODAL -->
+    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-xs p-6 relative">
+            <h3 class="text-xl font-black mb-6 border-b border-gray-100 dark:border-gray-700 pb-2">Settings</h3>
+            
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="settingThemeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="text-xs text-gray-400 mt-6 text-center">StudentDash v1.2</div>
+            
+            <button id="closeSettingsModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined">close</span></button>
+        </div>
+    </div>
+
+    <!-- Load Scripts -->
     <script src="script.js"></script>
+    <script src="settings.js"></script>
 </body>
 </html>

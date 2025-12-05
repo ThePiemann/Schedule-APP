@@ -1,714 +1,471 @@
 /* --------------------------
-   Global constants & state
+   Global State
    -------------------------- */
 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const startHour = 7;
 const endHour = 20;
 
 let currentSelectedSlot = null;
-let tempTodoText = "";
-let tempPriority = "med";
+let navDate = new Date(); 
 
-/* --------------------------
-   Event wiring
-   -------------------------- */
+// Todo State
+let editingTodoId = null;
+let currentFilter = 'all'; 
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Note: Theme loading is handled by settings.js now
+    
+    initCalendar(); 
+    renderMonthCalendar(); 
+    
+    // Default Calendar View: Today's Overview
+    const todayIndex = new Date().getDay(); 
+    const gridIndex = todayIndex === 0 ? 6 : todayIndex - 1;
+    showDailyOverview(gridIndex, new Date());
+
+    loadTodos();
+    initWeekCounter();
+    updateDateTime();
+    setupEventListeners();
+
+    setInterval(() => {
+        updateDateTime();
+        updateCountdowns();
+    }, 1000);
+});
+
 function setupEventListeners() {
-  // --- Schedule modal controls ---
-  safeAddClick('closeEventModal', closeEventModal);
-  safeAddClick('saveEventBtn', saveEventFromModal);
-  safeAddClick('deleteEventBtn', deleteEventFromModal);
+    // Calendar Events
+    safeAddClick('closeEventModal', closeEventModal);
+    safeAddClick('saveEventBtn', saveEventFromModal);
+    safeAddClick('deleteEventBtn', deleteEventFromModal);
+    document.getElementById('eventInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEventFromModal(); });
 
-  const eventInput = document.getElementById('eventInput');
-  if (eventInput) {
-    eventInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEventFromModal(); });
-  }
+    // Task Events
+    safeAddClick('addTodoBtn', initiateAddTodo);
+    document.getElementById('todoInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') initiateAddTodo(); });
+    safeAddClick('closeTodoModal', closeTodoModal);
+    safeAddClick('saveTodoDetailsBtn', finalizeAddTodo);
+    
+    // Filter Buttons
+    document.getElementById('filterAllBtn').addEventListener('click', () => setFilter('all'));
+    document.getElementById('filterTodayBtn').addEventListener('click', () => setFilter('today'));
 
-  // --- Todo creation controls ---
-  safeAddClick('addTodoBtn', initiateAddTodo);
-  const todoInput = document.getElementById('todoInput');
-  if (todoInput) {
-    todoInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') initiateAddTodo(); });
-  }
-
-  // --- Todo modal ---
-  safeAddClick('closeTodoModal', closeTodoModal);
-  safeAddClick('cancelTodoBtn', closeTodoModal);
-  safeAddClick('saveTodoDetailsBtn', finalizeAddTodo);
-
-  // Priority buttons (in modal)
-  document.querySelectorAll('.p-btn').forEach(btn =>{
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected'));
-      e.currentTarget.classList.add('selected');
-      tempPriority = e.currentTarget.dataset.priority || 'med';
+    // Priority Selection
+    document.querySelectorAll('.p-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
+            e.currentTarget.classList.add('selected', 'ring-2', 'ring-primary');
+        });
     });
-  });
 
-  // Close modals when clicking outside
-  window.addEventListener('click', (e) => {
-    const evModal = document.getElementById('eventModal');
-    const tdModal = document.getElementById('todoModal');
-    if (evModal && e.target === evModal) closeEventModal();
-    if (tdModal && e.target === tdModal) closeTodoModal();
-  });
+    // View Toggles
+    document.getElementById('toggleViewBtn').addEventListener('click', toggleCalendarView);
 
-  // Close on ESC key (modals + mobile drawer)
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeEventModal();
-      closeTodoModal();
-      closeMobileSidebar();
-    }
-  });
-
-  // Theme toggle
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) themeToggle.addEventListener('change', toggleTheme);
-
-  // Mobile drawer controls
-  const mobileBtn = document.getElementById('mobileMenuBtn');
-  const backdrop = document.getElementById('mobileBackdrop');
-
-  if (mobileBtn) {
-    // give a high z-index as a safety-net in case CSS lacked it
-    mobileBtn.style.zIndex = mobileBtn.style.zIndex || 2000;
-
-    mobileBtn.addEventListener('click', () => {
-      // If desktop width, don't use mobile drawer toggle
-      if (window.innerWidth > 768) return;
-      toggleMobileSidebar();
-    });
-  }
-
-  if (backdrop) {
-    backdrop.addEventListener('click', () => {
-      closeMobileSidebar();
-    });
-  }
-
-  // Desktop toggle button
-  const desktopToggle = document.getElementById('desktopToggleBtn');
-  if (desktopToggle) {
-    desktopToggle.addEventListener('click', () => {
-      // only operate desktop toggle when viewport wide enough
-      if (window.innerWidth <= 768) return;
-      const app = document.querySelector('.app-container');
-      if (!app) return;
-      const collapsed = app.classList.toggle('sidebar-collapsed');
-      localStorage.setItem('sidebarCollapsed', collapsed);
-    });
-  }
-
-  // When window resizes, ensure UI state consistent
-  window.addEventListener('resize', onWindowResize);
+    document.getElementById('prevMonth').addEventListener('click', () => { navDate.setMonth(navDate.getMonth() - 1); renderMonthCalendar(); });
+    document.getElementById('nextMonth').addEventListener('click', () => { navDate.setMonth(navDate.getMonth() + 1); renderMonthCalendar(); });
 }
 
-/* --------------------------
-   Helper utilities
-   -------------------------- */
 function safeAddClick(id, fn) {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('click', fn);
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', fn);
 }
 
 /* --------------------------
-   Theme & sidebar persistence
+   DATA PARSING HELPER
    -------------------------- */
-function loadTheme() {
-  const isDark = localStorage.getItem('isDarkMode') === 'true';
-  if (isDark) document.body.classList.add('dark-mode');
-  const toggle = document.getElementById('themeToggle');
-  if (toggle) toggle.checked = isDark;
-  updateThemeLabel(isDark);
-}
-
-function toggleTheme() {
-  const enabled = document.body.classList.toggle('dark-mode');
-  localStorage.setItem('isDarkMode', enabled);
-  updateThemeLabel(enabled);
-}
-
-function updateThemeLabel(isDark) {
-  const label = document.getElementById('themeModeLabel');
-  if (label) label.textContent = isDark ? 'Dark' : 'Light';
-}
-
-function loadSidebarState() {
-  // restore desktop collapsed state only if on desktop
-  const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-  const app = document.querySelector('.app-container');
-  if (!app) return;
-  if (collapsed && window.innerWidth > 768) {
-    app.classList.add('sidebar-collapsed');
-  } else {
-    app.classList.remove('sidebar-collapsed');
-  }
+function parseSlotData(rawData, defaultHour) {
+    if (!rawData) return null;
+    try {
+        if (rawData.startsWith('{')) {
+            return JSON.parse(rawData);
+        }
+    } catch(e) {}
+    
+    return {
+        subject: rawData,
+        start: `${defaultHour}:00`,
+        end: `${defaultHour + 1}:00`,
+        location: ""
+    };
 }
 
 /* --------------------------
-   Mobile drawer controls
+   Todo Logic
    -------------------------- */
-function openMobileSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const backdrop = document.getElementById('mobileBackdrop');
-  if (!sidebar) return;
-
-  sidebar.classList.add('active');
-  if (backdrop) backdrop.classList.add('show');
-
-  // lock body scroll
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
-}
-
-function closeMobileSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const backdrop = document.getElementById('mobileBackdrop');
-  if (!sidebar) return;
-
-  sidebar.classList.remove('active');
-  if (backdrop) backdrop.classList.remove('show');
-
-  // restore body scroll
-  document.documentElement.style.overflow = '';
-  document.body.style.overflow = '';
-}
-
-function toggleMobileSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  if (!sidebar) return;
-  if (sidebar.classList.contains('active')) closeMobileSidebar();
-  else openMobileSidebar();
-}
-
-/* --------------------------
-   Window resize adjustments
-   -------------------------- */
-function onWindowResize() {
-  // If user moves to desktop width, ensure mobile overlay is removed and sidebar restored according to stored state
-  if (window.innerWidth > 768) {
-    // remove mobile overlay classes
-    closeMobileSidebar();
-
-    // restore desktop collapse from localStorage
-    const app = document.querySelector('.app-container');
-    const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (app) {
-      if (collapsed) app.classList.add('sidebar-collapsed');
-      else app.classList.remove('sidebar-collapsed');
+function setFilter(type) {
+    currentFilter = type;
+    const allBtn = document.getElementById('filterAllBtn');
+    const todayBtn = document.getElementById('filterTodayBtn');
+    if (type === 'all') {
+        allBtn.className = "px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors";
+        todayBtn.className = "px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors";
+    } else {
+        allBtn.className = "px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors";
+        todayBtn.className = "px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors";
     }
-  } else {
-    // mobile view - don't keep desktop collapsed state interfering
-    const app = document.querySelector('.app-container');
-    if (app) app.classList.remove('sidebar-collapsed');
-  }
+    loadTodos();
 }
 
-function handleResizeOnStart() {
-  // called right after DOMContentLoaded to set correct initial UI
-  onWindowResize();
-}
-
-/* --------------------------
-   Calendar / schedule logic
-   -------------------------- */
-function initCalendar() {
-  const grid = document.getElementById('calendarGrid');
-  if (!grid) return;
-
-  // clear any existing content (idempotent)
-  grid.innerHTML = '';
-
-  // top-left time header
-  const timeHeader = document.createElement('div');
-  timeHeader.className = 'header-cell';
-  timeHeader.innerText = 'Time';
-  grid.appendChild(timeHeader);
-
-  // day headers
-  days.forEach(day => {
-    const dh = document.createElement('div');
-    dh.className = 'header-cell';
-    dh.innerText = day;
-    grid.appendChild(dh);
-  });
-
-  // time slots
-  for (let hour = startHour; hour <= endHour; hour++) {
-    const tLabel = document.createElement('div');
-    tLabel.className = 'time-label';
-    tLabel.innerText = `${hour}:00 - ${hour + 1}:00`;
-    grid.appendChild(tLabel);
-
-    days.forEach((d, index) => {
-      const slot = document.createElement('div');
-      slot.className = 'slot';
-      slot.dataset.day = index;
-      slot.dataset.hour = hour;
-      slot.addEventListener('click', () => openEventModal(slot));
-      grid.appendChild(slot);
-    });
-  }
-}
-
-function openEventModal(slot) {
-  currentSelectedSlot = slot;
-  const modal = document.getElementById('eventModal');
-  const input = document.getElementById('eventInput');
-  const title = document.getElementById('eventModalTitle');
-  if (!modal || !input || !title) return;
-
-  title.innerText = `Edit: ${days[slot.dataset.day]} @ ${slot.dataset.hour}:00`;
-  input.value = slot.innerText || '';
-  modal.style.display = 'flex';
-  input.focus();
-}
-
-function closeEventModal() {
-  const modal = document.getElementById('eventModal');
-  if (modal) modal.style.display = 'none';
-  currentSelectedSlot = null;
-}
-
-function saveEventFromModal() {
-  if (!currentSelectedSlot) return;
-  const input = document.getElementById('eventInput');
-  if (!input) return;
-
-  const rawText = input.value.trim().toUpperCase();
-  const day = currentSelectedSlot.dataset.day;
-  const hour = currentSelectedSlot.dataset.hour;
-  const key = `schedule-${day}-${hour}`;
-
-  if (rawText === "") {
-    deleteEventFromModal();
-    return;
-  }
-
-  const color = getSubjectColor(rawText);
-
-  currentSelectedSlot.innerText = rawText;
-  currentSelectedSlot.style.backgroundColor = color;
-  currentSelectedSlot.classList.add('filled');
-
-  localStorage.setItem(key, rawText);
-  closeEventModal();
-}
-
-function deleteEventFromModal() {
-  if (!currentSelectedSlot) return;
-  const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
-  currentSelectedSlot.innerText = "";
-  currentSelectedSlot.style.backgroundColor = "";
-  currentSelectedSlot.classList.remove('filled');
-  localStorage.removeItem(key);
-  closeEventModal();
-}
-
-function getSubjectColor(text) {
-  if (!text) return '';
-  const key = text.trim().toLowerCase();
-  let colorMap = {};
-  try {
-    colorMap = JSON.parse(localStorage.getItem('subjectColors')) || {};
-  } catch (e) {
-    colorMap = {};
-  }
-  if (colorMap[key]) return colorMap[key];
-
-  const hue = Math.floor(Math.random() * 360);
-  const newColor = `hsl(${hue}, 90%, 85%)`;
-  colorMap[key] = newColor;
-  localStorage.setItem('subjectColors', JSON.stringify(colorMap));
-  return newColor;
-}
-
-function loadSchedule() {
-  const slots = document.querySelectorAll('.slot');
-  slots.forEach(slot => {
-    const k = `schedule-${slot.dataset.day}-${slot.dataset.hour}`;
-    const saved = localStorage.getItem(k);
-    if (saved) {
-      slot.innerText = saved;
-      slot.classList.add('filled');
-      slot.style.backgroundColor = getSubjectColor(saved);
-    }
-  });
-}
-
-/* --------------------------
-   Todo list logic
-   -------------------------- */
 function initiateAddTodo() {
-  const input = document.getElementById('todoInput');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-
-  tempTodoText = text;
-  const name = document.getElementById('todoModalTaskName');
-  if (name) name.innerText = `Adding: "${text}"`;
-
-  const dateInput = document.getElementById('todoDateInput');
-  if (dateInput) dateInput.value = '';
-
-  tempPriority = 'med';
-  document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected'));
-  document.querySelector('.p-btn.med')?.classList.add('selected');
-
-  // Highlight the selected priority button
-  document.querySelectorAll('.p-btn').forEach(btn => {
-    btn.classList.remove('selected');
-    if (btn.classList.contains('med')) btn.classList.add('selected');
-  });
-
-  const modal = document.getElementById('todoModal');
-  if (modal) modal.style.display = 'flex';
+    const input = document.getElementById('todoInput');
+    const text = input.value.trim();
+    if (!text) return;
+    editingTodoId = null;
+    document.getElementById('todoModalTitle').innerText = "New Task";
+    document.getElementById('todoModalNameInput').value = text;
+    document.getElementById('todoDateInput').value = '';
+    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
+    document.querySelector('.p-btn.med')?.classList.add('selected', 'ring-2', 'ring-primary');
+    const modal = document.getElementById('todoModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
 }
 
-function closeTodoModal() {
-  const modal = document.getElementById('todoModal');
-  if (modal) modal.style.display = 'none';
-  const input = document.getElementById('todoInput');
-  if (input) input.value = '';
+function initiateEditTodo(id) {
+    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    const todo = todos.find(t => t.id == id);
+    if(!todo) return;
+    editingTodoId = id;
+    document.getElementById('todoModalTitle').innerText = "Edit Task";
+    document.getElementById('todoModalNameInput').value = todo.text;
+    if(todo.deadlineISO) {
+        const d = new Date(todo.deadlineISO);
+        const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        document.getElementById('todoDateInput').value = localIso;
+    } else {
+        document.getElementById('todoDateInput').value = '';
+    }
+    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
+    const pBtn = document.querySelector(`.p-btn[data-priority="${todo.priority}"]`);
+    if(pBtn) pBtn.classList.add('selected', 'ring-2', 'ring-primary');
+    const modal = document.getElementById('todoModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
 }
 
 function finalizeAddTodo() {
-  const dateVal = document.getElementById('todoDateInput')?.value;
-  const deadlineObj = dateVal ? new Date(dateVal) : null;
+    const nameVal = document.getElementById('todoModalNameInput').value.trim();
+    if (!nameVal) return;
+    const dateVal = document.getElementById('todoDateInput').value;
+    const deadlineObj = dateVal ? new Date(dateVal) : null;
+    let priority = 'med';
+    const selectedP = document.querySelector('.p-btn.selected');
+    if(selectedP) priority = selectedP.dataset.priority;
+    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
 
-  const todoObj = {
-    id: Date.now(),
-    text: tempTodoText,
-    deadlineISO: deadlineObj ? deadlineObj.toISOString() : "",
-    deadlineText: deadlineObj ? deadlineObj.toLocaleString() : "No Deadline",
-    priority: tempPriority || "med"
-  };
-
-  const existingTodos = getTodosFromDOM();
-  existingTodos.push(todoObj);
-  saveTodos(existingTodos);
-  sortAndRenderTodos(existingTodos);
-  closeTodoModal();
+    if (editingTodoId) {
+        const index = todos.findIndex(t => t.id == editingTodoId);
+        if (index > -1) {
+            todos[index].text = nameVal;
+            todos[index].deadlineISO = deadlineObj ? deadlineObj.toISOString() : "";
+            todos[index].deadlineText = deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline";
+            todos[index].priority = priority;
+        }
+    } else {
+        const todoObj = {
+            id: Date.now(),
+            text: nameVal,
+            deadlineISO: deadlineObj ? deadlineObj.toISOString() : "",
+            deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline",
+            priority: priority
+        };
+        todos.push(todoObj);
+    }
+    saveTodos(todos); renderTodos(todos); closeTodoModal();
+    document.getElementById('todoInput').value = ''; 
 }
 
-/* create todo DOM + attach behavior */
-function createTodoElement(todoObj) {
-  const list = document.getElementById('todoList');
-  if (!list || !todoObj) return;
+function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); document.getElementById('todoModal').classList.remove('flex'); }
+function saveTodos(todos) { localStorage.setItem('advancedTodos', JSON.stringify(todos)); }
+function loadTodos() { renderTodos(JSON.parse(localStorage.getItem('advancedTodos') || '[]')); }
 
-  const li = document.createElement('li');
-  li.className = 'todo-item';
-  li.classList.remove('p-high', 'p-med', 'p-low');
-  li.classList.add(`p-${todoObj.priority}`);
-  li._originalPriority = todoObj.priority;
-  li.dataset.id = todoObj.id;
-  li.dataset.deadlineIso = todoObj.deadlineISO || "";
-  li.dataset.originalPriority = todoObj.priority;
-
-  li.innerHTML = `
-    <div class="todo-header">
-      <span class="todo-title">${escapeHtml(todoObj.text)}</span>
-      <div class="todo-actions">
-        <button class="btn-icon info-btn" title="View Details">+</button>
-        <button class="btn-icon delete-btn" title="Delete">X</button>
-      </div>
-    </div>
-    <div class="todo-details">
-      <strong>Deadline:</strong> ${escapeHtml(todoObj.deadlineText)}
-      <br>
-      <span class="countdown-timer">--:--:--</span>
-      <br>
-      <strong>Priority:</strong> ${escapeHtml((todoObj.priority || 'med').toUpperCase())}
-    </div>
-  `;
-
-  // --- Priority border always on top ---
-  const headerDiv = li.querySelector('.todo-header');
-  if (headerDiv) {
-    headerDiv.style.position = 'relative';
-    headerDiv.style.zIndex = '2';
-  }
-
-  // delete button
-  li.querySelector('.delete-btn')?.addEventListener('click', () => {
-    const idToDelete = li.dataset.id;
-    let existingTodos = getTodosFromDOM();
-    existingTodos = existingTodos.filter(todo => todo.id !== idToDelete);
-    saveTodos(existingTodos);
-    sortAndRenderTodos(existingTodos);
-  });
-
-  // Attach toggle animation for details
-  const infoBtn = li.querySelector('.info-btn');
-  const detailsDiv = li.querySelector('.todo-details');
-  if (infoBtn && detailsDiv) {
-    infoBtn.addEventListener('click', () => {
-      const expanding = !detailsDiv.classList.contains('show');
-      if (expanding) {
-        detailsDiv.style.height = 'auto';
-        const full = detailsDiv.scrollHeight + 'px';
-        detailsDiv.style.height = '0px';
-        void detailsDiv.offsetWidth;
-        requestAnimationFrame(() => {
-          detailsDiv.classList.add('show');
-          detailsDiv.style.height = full;
+function renderTodos(todos) {
+    const list = document.getElementById('todoList');
+    list.innerHTML = '';
+    let filteredTodos = todos;
+    if (currentFilter === 'today') {
+        const todayStr = new Date().toDateString();
+        filteredTodos = todos.filter(t => {
+            if (!t.deadlineISO) return false;
+            return new Date(t.deadlineISO).toDateString() === todayStr;
         });
-        const onEnd = () => {
-          detailsDiv.style.height = '';
-          detailsDiv.removeEventListener('transitionend', onEnd);
-        };
-        detailsDiv.addEventListener('transitionend', onEnd);
-        infoBtn.innerText = '-';
-      } else {
-        detailsDiv.style.height = detailsDiv.scrollHeight + 'px';
-        void detailsDiv.offsetWidth;
-        requestAnimationFrame(() => {
-          detailsDiv.classList.remove('show');
-          detailsDiv.style.height = '0px';
-        });
-        const onEnd = () => {
-          detailsDiv.style.height = '';
-          detailsDiv.removeEventListener('transitionend', onEnd);
-        };
-        detailsDiv.addEventListener('transitionend', onEnd);
-        infoBtn.innerText = '+';
-      }
+    }
+    filteredTodos.sort((a,b) => {
+        const pVal = { high: 3, med: 2, low: 1 };
+        const pDiff = pVal[b.priority] - pVal[a.priority];
+        if (pDiff !== 0) return pDiff;
+        const tA = a.deadlineISO ? new Date(a.deadlineISO).getTime() : 9999999999999;
+        const tB = b.deadlineISO ? new Date(b.deadlineISO).getTime() : 9999999999999;
+        return tA - tB;
     });
-  }
+    if (filteredTodos.length === 0) {
+        list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic">No tasks found.</div>`;
+        return;
+    }
+    filteredTodos.forEach(t => createTodoElement(t, list));
+}
 
-  list.appendChild(li);
-  updateCountdowns();
+function createTodoElement(todoObj, container) {
+    const div = document.createElement('div');
+    div.className = "flex items-center gap-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group border border-transparent hover:border-gray-200 dark:hover:border-gray-600 cursor-pointer";
+    div.dataset.id = todoObj.id; div.dataset.deadlineIso = todoObj.deadlineISO || "";
+
+    let dotColor = 'bg-yellow-500';
+    if(todoObj.priority === 'high') dotColor = 'bg-red-500';
+    if(todoObj.priority === 'low') dotColor = 'bg-green-500';
+
+    div.innerHTML = `
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(todoObj.text)}</p>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                <span>${todoObj.deadlineText}</span>
+                <span class="hidden countdown-timer font-mono text-primary font-bold"></span>
+            </div>
+        </div>
+        <div class="w-3 h-3 rounded-full ${dotColor} shrink-0"></div>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button class="edit-btn text-blue-500 hover:bg-blue-100 p-1 rounded" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>
+            <button class="delete-btn text-red-500 hover:bg-red-100 p-1 rounded" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>
+        </div>
+    `;
+    div.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); initiateEditTodo(todoObj.id); });
+    div.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); let todos = JSON.parse(localStorage.getItem('advancedTodos')); todos = todos.filter(t => t.id != todoObj.id); saveTodos(todos); renderTodos(todos); });
+    container.appendChild(div);
 }
 
 /* --------------------------
-   Todo list ordering logic
-   -------------------------- */
-
-/**
- * Assigns a numerical value to priority for easy comparison.
- * High (3) > Med (2) > Low (1)
- */
-function getPriorityValue(p) {
-  if (p === 'high') return 3;
-  if (p === 'med') return 2;
-  return 1;
-}
-
-/**
- * Custom sort function for two todo objects (a and b).
- * 1. Priority (High > Med > Low)
- * 2. Deadline (Closer date first)
- * 3. No Deadline (Items without a deadline go last within their priority group)
- */
-function compareTodos(a, b) {
-  const pA = getPriorityValue(a.priority);
-  const pB = getPriorityValue(b.priority);
-
-  // 1. Sort by Priority (Descending)
-  if (pA !== pB) {
-    return pB - pA;
-  }
-
-  // 2. Sort by Deadline (Ascending)
-  const dateA = a.deadlineISO ? new Date(a.deadlineISO).getTime() : 32503680000000;
-  const dateB = b.deadlineISO ? new Date(b.deadlineISO).getTime() : 32503680000000;
-  return dateA - dateB;
-}
-
-/**
- * Reads all current todo items from the DOM and returns them as an array of objects.
- */
-function getTodosFromDOM() {
-  const todos = [];
-  document.querySelectorAll('.todo-item').forEach(li => {
-    const title = li.querySelector('.todo-title')?.innerText || '';
-    const deadlineISO = li.dataset.deadlineIso || '';
-    let p = li._originalPriority || li.dataset.originalPriority || 'med';
-    const deadlineText = deadlineISO ? new Date(deadlineISO).toLocaleString() : 'No Deadline';
-    todos.push({
-      id: li.dataset.id,
-      text: title,
-      deadlineText,
-      deadlineISO,
-      priority: p
-    });
-  });
-  return todos;
-}
-
-/**
- * Clears the list, sorts the list using compareTodos, and re-renders them.
- */
-function sortAndRenderTodos(todos) {
-  const list = document.getElementById('todoList');
-  if (!list) return;
-  todos.sort(compareTodos);
-  list.innerHTML = '';
-  todos.forEach(obj => createTodoElement(obj));
-}
-
-function loadTodos() {
-  const stored = localStorage.getItem('advancedTodos');
-  if (!stored) return;
-  try {
-    let todos = JSON.parse(stored);
-    if (!Array.isArray(todos)) return;
-    todos = todos.map(obj => {
-      if (!obj.deadlineISO && obj.deadline) {
-        const d = new Date(obj.deadline);
-        if (!isNaN(d)) obj.deadlineISO = d.toISOString();
-      }
-      if (!obj.deadlineText) obj.deadlineText = obj.deadline || 'No Deadline';
-      return {
-        id: obj.id || Date.now(),
-        text: obj.text || '',
-        deadlineISO: obj.deadlineISO || '',
-        deadlineText: obj.deadlineText || 'No Deadline',
-        priority: obj.priority || 'med'
-      };
-    });
-    sortAndRenderTodos(todos);
-  } catch (e) {
-    console.warn('Could not parse todos from localStorage', e);
-  }
-}
-
-/* Save / Load todos from localStorage */
-function saveTodos(todosArray) {
-  if (todosArray) {
-    localStorage.setItem('advancedTodos', JSON.stringify(todosArray));
-    return;
-  }
-  const todos = getTodosFromDOM();
-  localStorage.setItem('advancedTodos', JSON.stringify(todos));
-}
-
-/* --------------------------
-   Countdown timers
+   Utils
    -------------------------- */
 function updateCountdowns() {
-  const now = new Date();
-  document.querySelectorAll('.todo-item').forEach(li => {
-    const iso = li.dataset.deadlineIso;
-    const timerSpan = li.querySelector('.countdown-timer');
-    const headerDiv = li.querySelector('.todo-header');
-    if (!timerSpan || !headerDiv) return;
-
-    // Reset border style
-    headerDiv.style.borderLeft = '';
-    headerDiv.style.borderLeftColor = '';
-    headerDiv.style.boxShadow = '';
-
-    if (!iso) {
-      timerSpan.style.display = 'none';
-      li.classList.remove('p-high', 'p-med', 'p-low');
-      const orig = li._originalPriority || 'med';
-      li.classList.add(`p-${orig}`);
-      return;
-    }
-
-    timerSpan.style.display = 'inline-flex';
-    const deadline = new Date(iso);
-    const diff = deadline - now;
-
-    if (diff <= 0) {
-      timerSpan.innerText = '00h:00m:00s';
-      timerSpan.style.color = '#e74c3c';
-      li.classList.remove('p-high', 'p-med', 'p-low');
-      // Set left border to orange for overdue
-      headerDiv.style.borderLeft = '8px solid #e67e22';
-      headerDiv.style.boxShadow = '';
-    } else {
-      const totalSeconds = Math.floor(diff / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      const hStr = String(hours).padStart(2,'0');
-      const mStr = String(minutes).padStart(2,'0');
-      const sStr = String(seconds).padStart(2,'0');
-      timerSpan.innerText = `${hStr}h:${mStr}m:${sStr}s`;
-      timerSpan.style.minWidth = '90px';
-      timerSpan.style.color = '';
-
-      if (diff <= 3600 * 1000) {
-        li.classList.remove('p-high', 'p-med', 'p-low');
-        li.classList.add('p-high');
-        headerDiv.style.borderLeft = '';
-      } else {
-        li.classList.remove('p-high', 'p-med', 'p-low');
-        const orig = li._originalPriority || 'med';
-        li.classList.add(`p-${orig}`);
-        headerDiv.style.borderLeft = '';
-      }
-    }
-  });
+    const now = new Date();
+    document.querySelectorAll('#todoList > div').forEach(div => {
+        const iso = div.dataset.deadlineIso;
+        const timerSpan = div.querySelector('.countdown-timer');
+        if(!iso || !timerSpan) return;
+        const diff = new Date(iso) - now;
+        if(diff <= 0) {
+            timerSpan.innerText = "Overdue"; timerSpan.classList.remove('hidden'); timerSpan.classList.add('text-red-500');
+        } else if (diff < 172800000) { 
+            const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000);
+            timerSpan.classList.remove('hidden'); timerSpan.innerText = `${h}h ${m}m`;
+        } else { timerSpan.classList.add('hidden'); }
+    });
 }
-
-/* --------------------------
-   Week counter & datetime
-   -------------------------- */
-function initWeekCounter() {
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const pastDays = Math.floor((today - startOfYear) / (24*60*60*1000));
-  let weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
-
-  if (weekNumber % 2 !== 0) weekNumber++;
-
-  const isEven = weekNumber % 2 === 0;
-  const display = document.getElementById('weekDisplay');
-  if (!display) return;
-  if (isEven) {
-    display.innerText = 'Current Week: EVEN';
-    display.style.backgroundColor = '#27ae60';
-  } else {
-    display.innerText = 'Current Week: ODD';
-    display.style.backgroundColor = '#e67e22';
-  }
-}
-
 function updateDateTime() {
-  const display = document.getElementById('datetimeDisplay');
-  if (!display) return;
-  const now = new Date();
-  const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-  const formattedDate = now.toLocaleDateString('en-US', dateOptions);
-  const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-  const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
-  display.innerHTML = `${formattedDate} | ${formattedTime}`;
+    const d = document.getElementById('datetimeDisplay');
+    if(d) d.innerText = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function initWeekCounter() {
+    const d = new Date();
+    const weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    const div = document.getElementById('weekDisplay');
+    div.innerText = weekNum % 2 === 0 ? "Week: EVEN" : "Week: ODD";
+    div.className = weekNum % 2 === 0 ? "text-xs font-bold px-3 py-1 rounded bg-green-100 text-green-700" : "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
+}
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 /* --------------------------
-   Utility small helpers
+   CALENDAR LOGIC (Standard)
    -------------------------- */
-function escapeHtml(str) {
-  if (typeof str !== 'string') return '';
-  return str.replace(/[&<>"']/g, (m) => {
-    switch (m) {
-      case '&': return '&amp;';
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '"': return '&quot;';
-      case "'": return '&#39;';
-      default: return m;
+function toggleCalendarView() {
+    const monthView = document.getElementById('monthView');
+    const weekView = document.getElementById('weekView');
+    const btnText = document.getElementById('toggleBtnText');
+    const nav = document.getElementById('monthNav');
+    const title = document.getElementById('calendarTitle');
+
+    if (monthView.classList.contains('hidden')) {
+        monthView.classList.remove('hidden'); weekView.classList.add('hidden');
+        btnText.innerText = "Edit"; nav.classList.remove('hidden'); title.innerText = "Class Schedule";
+        renderMonthCalendar();
+    } else {
+        monthView.classList.add('hidden'); weekView.classList.remove('hidden'); weekView.classList.add('flex');
+        btnText.innerText = "Back"; nav.classList.add('hidden'); title.innerText = "Weekly Editor";
     }
-  });
 }
 
-// Remove DOMContentLoaded wrapper and run initialization directly
-loadTheme();
-loadSidebarState();
-initCalendar();
-loadSchedule();
-initWeekCounter();
-loadTodos();
-updateDateTime();
+function renderMonthCalendar() {
+    const grid = document.getElementById('monthGrid');
+    const monthLabel = document.getElementById('currentMonthLabel');
+    grid.innerHTML = "";
+    const year = navDate.getFullYear();
+    const month = navDate.getMonth();
+    monthLabel.innerText = new Date(year, month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+    const today = new Date();
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = "month-day text-gray-700 dark:text-gray-300";
+        dayDiv.innerText = d;
+        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dayDiv.classList.add('today');
+        let dayOfWeek = new Date(year, month, d).getDay(); 
+        let arrayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+        
+        let hasClass = false;
+        for (let h = startHour; h <= endHour; h++) {
+            if (localStorage.getItem(`schedule-${arrayIndex}-${h}`)) hasClass = true;
+        }
 
-setInterval(() => {
-  updateDateTime();
-  updateCountdowns();
-}, 1000);
+        if (hasClass) {
+            const dot = document.createElement('div'); dot.className = "class-dot"; dayDiv.appendChild(dot);
+        }
+        dayDiv.addEventListener('click', () => {
+            document.querySelectorAll('.month-day').forEach(el => el.classList.remove('selected-day'));
+            dayDiv.classList.add('selected-day');
+            showDailyOverview(arrayIndex, new Date(year, month, d));
+        });
+        grid.appendChild(dayDiv);
+    }
+}
 
-setupEventListeners();
-handleResizeOnStart();
+function showDailyOverview(dayIndex, dateObj) {
+    const container = document.getElementById('dailyOverview');
+    const label = document.getElementById('overviewDateLabel');
+    container.innerHTML = "";
+    if(dateObj) label.innerText = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric'});
+    
+    let hasClass = false;
+    for (let h = startHour; h <= endHour; h++) {
+        const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
+        if (rawData) {
+            hasClass = true;
+            const data = parseSlotData(rawData, h);
+            const color = getSubjectColor(data.subject); 
+            
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
+            div.innerHTML = `
+                <div class="w-1 h-12 rounded-full mt-1" style="background-color: ${color}"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${data.subject}</p>
+                    <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span class="material-symbols-outlined text-[10px]">schedule</span>
+                        <span>${data.start} - ${data.end}</span>
+                    </div>
+                    ${data.location ? `
+                    <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span class="material-symbols-outlined text-[10px]">location_on</span>
+                        <span>${data.location}</span>
+                    </div>` : ''}
+                </div>
+            `;
+            container.appendChild(div);
+        }
+    }
+    if (!hasClass) container.innerHTML = `<div class="text-center py-2 text-gray-400 text-xs italic">No classes.</div>`;
+}
+
+function initCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const timeHeader = document.createElement('div'); timeHeader.className = 'header-cell'; timeHeader.innerText = 'TIME'; grid.appendChild(timeHeader);
+    days.forEach(day => { const dh = document.createElement('div'); dh.className = 'header-cell'; dh.innerText = day; grid.appendChild(dh); });
+    for (let hour = startHour; hour <= endHour; hour++) {
+        const tLabel = document.createElement('div'); tLabel.className = 'time-label'; tLabel.innerText = `${hour}:00`; grid.appendChild(tLabel);
+        days.forEach((d, index) => {
+            const slot = document.createElement('div'); 
+            slot.className = 'slot'; 
+            slot.dataset.day = index; 
+            slot.dataset.hour = hour;
+            slot.addEventListener('click', () => openEventModal(slot));
+            
+            const rawData = localStorage.getItem(`schedule-${index}-${hour}`);
+            if(rawData) { 
+                const data = parseSlotData(rawData, hour);
+                slot.style.backgroundColor = getSubjectColor(data.subject); 
+                slot.style.color = '#333'; 
+                // Enhanced Weekly UI
+                slot.innerHTML = `
+                    <div class="font-bold truncate">${data.subject}</div>
+                    <div class="text-[10px] opacity-70 leading-tight">${data.start}-${data.end}</div>
+                    ${data.location ? `<div class="text-[9px] opacity-60 truncate">${data.location}</div>` : ''}
+                `;
+            }
+            grid.appendChild(slot);
+        });
+    }
+}
+
+function openEventModal(slot) { 
+    currentSelectedSlot = slot; 
+    const modal = document.getElementById('eventModal'); 
+    
+    // Fill fields if data exists
+    const hour = parseInt(slot.dataset.hour);
+    const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
+    
+    if (rawData) {
+        const data = parseSlotData(rawData, hour);
+        document.getElementById('eventInput').value = data.subject;
+        document.getElementById('startTimeInput').value = data.start;
+        document.getElementById('endTimeInput').value = data.end;
+        document.getElementById('locationInput').value = data.location;
+    } else {
+        // Defaults
+        document.getElementById('eventInput').value = '';
+        document.getElementById('startTimeInput').value = `${hour.toString().padStart(2,'0')}:00`;
+        document.getElementById('endTimeInput').value = `${(hour+1).toString().padStart(2,'0')}:00`;
+        document.getElementById('locationInput').value = '';
+    }
+
+    modal.classList.remove('hidden'); 
+    modal.classList.add('flex'); 
+    document.getElementById('eventInput').focus(); 
+}
+
+function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); currentSelectedSlot = null; }
+
+function saveEventFromModal() {
+    if (!currentSelectedSlot) return;
+    const text = document.getElementById('eventInput').value.trim().toUpperCase();
+    const start = document.getElementById('startTimeInput').value;
+    const end = document.getElementById('endTimeInput').value;
+    const loc = document.getElementById('locationInput').value.trim();
+    
+    const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
+    
+    if (text === "") { deleteEventFromModal(); return; }
+
+    const eventData = {
+        subject: text,
+        start: start,
+        end: end,
+        location: loc
+    };
+
+    localStorage.setItem(key, JSON.stringify(eventData));
+    closeEventModal(); 
+    
+    initCalendar();
+    renderMonthCalendar(); 
+    
+    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+    if (parseInt(currentSelectedSlot.dataset.day) === todayIndex) {
+        showDailyOverview(todayIndex, new Date());
+    }
+}
+
+function deleteEventFromModal() {
+    if (!currentSelectedSlot) return;
+    const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
+    localStorage.removeItem(key); 
+    closeEventModal(); 
+    initCalendar();
+    renderMonthCalendar();
+    
+    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+    if (parseInt(currentSelectedSlot.dataset.day) === todayIndex) {
+        showDailyOverview(todayIndex, new Date());
+    }
+}
+
+function getSubjectColor(text) {
+    if (!text) return ''; const key = text.trim().toLowerCase(); let colorMap = JSON.parse(localStorage.getItem('subjectColors')) || {};
+    if (colorMap[key]) return colorMap[key]; const hue = Math.floor(Math.random() * 360);
+    const newColor = `hsl(${hue}, 85%, 85%)`; colorMap[key] = newColor; localStorage.setItem('subjectColors', JSON.stringify(colorMap)); return newColor;
+}
