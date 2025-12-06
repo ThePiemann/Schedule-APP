@@ -4,6 +4,10 @@
 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 20px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.6); }
 
+/* Hide scrollbar for Nav on mobile */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* --- Weekly Grid System --- */
 .calendar-wrapper { position: relative; height: 100%; width: 100%; }
 .calendar-grid {
@@ -35,7 +39,7 @@
 .slot {
   background-color: #ffffff; height: 60px; padding: 2px 4px;
   font-size: 0.8rem; 
-  display: flex; flex-direction: column; /* CHANGED: Column to stack text */
+  display: flex; flex-direction: column; 
   align-items: center; justify-content: center;
   text-align: center; cursor: pointer; transition: filter 0.2s; color: #1f2937;
   overflow: hidden;
@@ -43,6 +47,22 @@
 .slot:hover { filter: brightness(0.95); }
 .dark .slot { background-color: #252b32; color: #e5e7eb; }
 .dark .slot:hover { filter: brightness(1.1); }
+
+/* --- DRAG AND DROP STYLES --- */
+.slot[draggable="true"] {
+    cursor: grab;
+}
+.slot[draggable="true"]:active {
+    cursor: grabbing;
+}
+.slot.drag-over {
+    background-color: rgba(74, 144, 226, 0.3) !important; /* Primary blue tint */
+    box-shadow: inset 0 0 0 2px #4A90E2;
+    z-index: 5;
+}
+.dark .slot.drag-over {
+    background-color: rgba(74, 144, 226, 0.3) !important;
+}
 
 /* --- COMPACT MONTH GRID --- */
 .month-day {
@@ -55,19 +75,33 @@
     font-size: 0.85rem; font-weight: 500;
     transition: all 0.2s;
     z-index: 1;
+    /* CHANGED: Add transparent border by default to prevent layout jump on selection */
+    border: 2px solid transparent; 
 }
 .month-day:hover { background-color: rgba(74, 144, 226, 0.1); }
+
+/* TODAY STYLE (Full Blue Circle) */
 .month-day.today { 
     background-color: #4A90E2; 
     color: white; 
     font-weight: bold; 
     box-shadow: 0 2px 4px rgba(74, 144, 226, 0.4);
+    /* Border matches bg so size stays consistent */
+    border-color: #4A90E2; 
 }
-.month-day.selected-day { 
-    ring: 2px solid #F5A623; 
-    ring-offset: 1px;
+
+/* SELECTED STYLE (Hollow Blue Circle) */
+/* Only apply hollow style if it's NOT today */
+.month-day.selected-day:not(.today) { 
+    border-color: #4A90E2; /* Blue Border */
+    color: #4A90E2;        /* Blue Text */
+    background-color: transparent; /* White/Transparent Inside */
 }
-.dark .month-day.selected-day { ring-offset-color: #1C2227; }
+
+/* Ensure Today stays solid even if selected */
+.month-day.selected-day.today {
+    border-color: #2a6bb6; /* Slightly darker border for selected today */
+}
 
 .class-dot {
     width: 4px; height: 4px; 
@@ -104,3 +138,29 @@ input:checked + .slider:before { transform: translateX(18px); }
     color: #6b7280 !important;
 }
 .dark .filter-inactive { color: #9ca3af !important; }
+
+/* --- Settings Modal Styles --- */
+.settings-nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-weight: 600; font-size: 0.9rem;
+    color: #6b7280; 
+    transition: all 0.2s;
+    justify-content: center;
+    flex: 1;
+    white-space: nowrap;
+}
+@media (min-width: 768px) {
+    .settings-nav-item {
+        justify-content: flex-start;
+        width: 100%;
+        gap: 12px;
+        padding: 10px 16px;
+    }
+}
+.dark .settings-nav-item { color: #9ca3af; }
+.settings-nav-item:hover { background-color: rgba(0,0,0,0.05); color: #111827; }
+.dark .settings-nav-item:hover { background-color: rgba(255,255,255,0.05); color: white; }
+.settings-nav-item.active { background-color: rgba(74, 144, 226, 0.1); color: #4A90E2; }
+.settings-nav-item .icon { font-size: 20px; }

@@ -18,6 +18,8 @@ function initSettings() {
 
     if (settingsBtn && settingsModal) {
         settingsBtn.addEventListener('click', () => {
+            // Reset to Account tab on open
+            switchSettingsTab('Account');
             settingsModal.classList.remove('hidden');
             settingsModal.classList.add('flex');
         });
@@ -35,6 +37,35 @@ function initSettings() {
         if (e.target === settingsModal) {
             settingsModal.classList.add('hidden');
             settingsModal.classList.remove('flex');
+        }
+    });
+
+    // 3. Setup Sidebar Navigation logic
+    setupSettingsNavigation();
+}
+
+function setupSettingsNavigation() {
+    const tabs = ['Account', 'Theme', 'About'];
+    tabs.forEach(tab => {
+        const btn = document.getElementById(`setBtn${tab}`);
+        if (btn) {
+            btn.addEventListener('click', () => switchSettingsTab(tab));
+        }
+    });
+}
+
+function switchSettingsTab(activeTabName) {
+    const tabs = ['Account', 'Theme', 'About'];
+    tabs.forEach(tab => {
+        const btn = document.getElementById(`setBtn${tab}`);
+        const section = document.getElementById(`setSection${tab}`);
+        
+        if (tab === activeTabName) {
+            if(btn) btn.classList.add('active');
+            if(section) section.classList.remove('hidden');
+        } else {
+            if(btn) btn.classList.remove('active');
+            if(section) section.classList.add('hidden');
         }
     });
 }

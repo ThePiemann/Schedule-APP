@@ -2,8 +2,19 @@
 <html lang="en" class="h-full">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>StudentDash</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4A90E2">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="StudentDash">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="icon" type="image/png" sizes="500x500" href="studentDash.png">
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -40,7 +51,6 @@
         <div class="flex items-center gap-4">
             <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
             
-            <!-- NEW SETTINGS GEAR ICON -->
             <button id="settingsBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors" title="Settings">
                 <span class="material-symbols-outlined">settings</span>
             </button>
@@ -57,7 +67,6 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-10">
                 
-                <!-- Tasks -->
                 <div class="lg:col-span-5 flex flex-col gap-6">
                     <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-full">
                         <h3 class="text-xl font-bold mb-4">My Tasks</h3>
@@ -78,7 +87,6 @@
                     </div>
                 </div>
 
-                <!-- Schedule -->
                 <div class="lg:col-span-7 flex flex-col gap-6">
                     <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden relative">
                         
@@ -97,7 +105,6 @@
                             </button>
                         </div>
 
-                        <!-- Month View -->
                         <div id="monthView" class="p-4 transition-all duration-300">
                             <div class="grid grid-cols-7 mb-2 text-center">
                                 <div class="text-[10px] font-bold text-gray-400">S</div>
@@ -116,7 +123,6 @@
                             </div>
                         </div>
 
-                        <!-- Weekly Editor -->
                         <div id="weekView" class="hidden h-[500px] flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
                             <div class="calendar-wrapper h-full overflow-auto">
                                 <div class="calendar-grid" id="calendarGrid"></div>
@@ -129,7 +135,6 @@
         </div>
     </main>
     
-    <!-- SCHEDULE MODAL -->
     <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6">
             <h3 class="text-lg font-bold mb-4">Edit Class Details</h3>
@@ -159,7 +164,6 @@
         </div>
     </div>
 
-    <!-- TASK MODAL -->
     <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
             <h3 id="todoModalTitle" class="text-lg font-bold mb-4">New Task</h3>
@@ -181,26 +185,108 @@
         </div>
     </div>
 
-    <!-- NEW SETTINGS MODAL -->
-    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-xs p-6 relative">
-            <h3 class="text-xl font-black mb-6 border-b border-gray-100 dark:border-gray-700 pb-2">Settings</h3>
+    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
+        <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative">
             
-            <div class="flex items-center justify-between mb-4">
-                <span class="font-bold text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
-                <label class="switch">
-                    <input type="checkbox" id="settingThemeToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            
-            <div class="text-xs text-gray-400 mt-6 text-center">StudentDash v1.2</div>
-            
-            <button id="closeSettingsModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined">close</span></button>
+            <button id="closeSettingsModal" class="absolute top-4 right-4 z-20 p-1 bg-white/50 dark:bg-black/20 rounded-full md:bg-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+
+            <aside class="w-full md:w-64 bg-gray-50 dark:bg-gray-900/50 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col shrink-0 z-10">
+                <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
+                <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
+                    <button id="setBtnAccount" class="settings-nav-item active">
+                        <span class="material-symbols-outlined icon">person</span>
+                        Account
+                    </button>
+                    <button id="setBtnTheme" class="settings-nav-item">
+                        <span class="material-symbols-outlined icon">palette</span>
+                        Theme
+                    </button>
+                    <button id="setBtnAbout" class="settings-nav-item">
+                         <span class="material-symbols-outlined icon">info</span>
+                        About
+                    </button>
+                </nav>
+            </aside>
+
+            <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative bg-card-light dark:bg-card-dark">
+                <div class="md:hidden h-6"></div> 
+
+                <div id="setSectionAccount" class="settings-section">
+                    <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-8">Update your profile and manage your account.</p>
+
+                    <h4 class="font-bold mb-4">Profile Information</h4>
+                    <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+                        <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 shrink-0">
+                            <span class="material-symbols-outlined text-4xl">person</span>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button disabled class="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg opacity-50 cursor-not-allowed">Upload New</button>
+                            <button disabled class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-sm rounded-lg opacity-50 cursor-not-allowed">Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label>
+                            <input type="text" readonly value="Student" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                        </div>
+                         <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label>
+                            <input type="text" readonly value="User" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                        </div>
+                    </div>
+                    <div class="mb-10">
+                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
+                         <input type="email" readonly value="student.user@example.com" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                    </div>
+
+                    <h4 class="font-bold mb-4">Password Management</h4>
+                    <div>
+                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Current Password</label>
+                         <input type="password" readonly value="password123" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed mb-4">
+                          <p class="text-xs text-gray-500 italic">Password changing is disabled in this demo.</p>
+                    </div>
+                </div>
+
+                <div id="setSectionTheme" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Theme Preferences</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">Customize the look and feel of your dashboard.</p>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div>
+                            <h4 class="font-bold mb-1">Dark Mode</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Switch between light and dark themes.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="settingThemeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                 <div id="setSectionAbout" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">About</h3>
+                    
+                    <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
+                        <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                        <div>
+                             <h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.3</h4>
+                             <p class="text-gray-600 dark:text-gray-300 leading-relaxed">A simple, intuitive dashboard for managing student tasks and class schedules.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center pt-8 border-t border-gray-200 dark:border-gray-700">
+                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Designed & Developed by</p>
+                         <p class="font-bold text-lg">[Your Name/Credit Here]</p>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
-    <!-- Load Scripts -->
     <script src="script.js"></script>
     <script src="settings.js"></script>
 </body>

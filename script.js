@@ -7,6 +7,7 @@ const endHour = 20;
 
 let currentSelectedSlot = null;
 let navDate = new Date(); 
+let currentOverviewDate = new Date(); // NEW: Tracks the specific date shown in the sidebar
 
 // Todo State
 let editingTodoId = null;
@@ -84,8 +85,8 @@ function parseSlotData(rawData, defaultHour) {
     
     return {
         subject: rawData,
-        start: `${defaultHour}:00`,
-        end: `${defaultHour + 1}:00`,
+        start: `${defaultHour.toString().padStart(2,'0')}:00`,
+        end: `${(defaultHour + 1).toString().padStart(2,'0')}:00`,
         location: ""
     };
 }
@@ -267,7 +268,7 @@ function escapeHtml(str) {
 }
 
 /* --------------------------
-   CALENDAR LOGIC (Standard)
+   CALENDAR LOGIC (Standard + DnD)
    -------------------------- */
 function toggleCalendarView() {
     const monthView = document.getElementById('monthView');
@@ -284,6 +285,16 @@ function toggleCalendarView() {
         monthView.classList.add('hidden'); weekView.classList.remove('hidden'); weekView.classList.add('flex');
         btnText.innerText = "Back"; nav.classList.add('hidden'); title.innerText = "Weekly Editor";
     }
+}
+
+// NEW: Helper to refresh everything at once (Grid, Dots, Side Panel)
+function refreshAllViews() {
+    initCalendar(); // Update Weekly Editor
+    renderMonthCalendar(); // Update Month Dots
+    
+    // Refresh the Side Panel based on whatever date was last selected
+    const dayIndex = currentOverviewDate.getDay() === 0 ? 6 : currentOverviewDate.getDay() - 1;
+    showDailyOverview(dayIndex, currentOverviewDate);
 }
 
 function renderMonthCalendar() {
@@ -323,6 +334,8 @@ function renderMonthCalendar() {
 }
 
 function showDailyOverview(dayIndex, dateObj) {
+    currentOverviewDate = dateObj; // Update Global State
+
     const container = document.getElementById('dailyOverview');
     const label = document.getElementById('overviewDateLabel');
     container.innerHTML = "";
@@ -372,18 +385,37 @@ function initCalendar() {
             slot.className = 'slot'; 
             slot.dataset.day = index; 
             slot.dataset.hour = hour;
-            slot.addEventListener('click', () => openEventModal(slot));
+            
+            // Drag Drop Events (All slots are targets)
+            slot.addEventListener('dragover', handleDragOver);
+            slot.addEventListener('dragenter', handleDragEnter);
+            slot.addEventListener('dragleave', handleDragLeave);
+            slot.addEventListener('drop', handleDrop);
+
+            // Click event (unless dragged)
+            slot.addEventListener('click', (e) => {
+                // simple check to avoid firing click after drop
+                if(slot.classList.contains('just-dropped')) {
+                    slot.classList.remove('just-dropped');
+                    return;
+                }
+                openEventModal(slot);
+            });
             
             const rawData = localStorage.getItem(`schedule-${index}-${hour}`);
             if(rawData) { 
                 const data = parseSlotData(rawData, hour);
                 slot.style.backgroundColor = getSubjectColor(data.subject); 
                 slot.style.color = '#333'; 
-                // Enhanced Weekly UI
+                
+                // DRAGGABLE
+                slot.draggable = true;
+                slot.addEventListener('dragstart', handleDragStart);
+
                 slot.innerHTML = `
-                    <div class="font-bold truncate">${data.subject}</div>
-                    <div class="text-[10px] opacity-70 leading-tight">${data.start}-${data.end}</div>
-                    ${data.location ? `<div class="text-[9px] opacity-60 truncate">${data.location}</div>` : ''}
+                    <div class="font-bold truncate pointer-events-none">${data.subject}</div>
+                    <div class="text-[10px] opacity-70 leading-tight pointer-events-none">${data.start}-${data.end}</div>
+                    ${data.location ? `<div class="text-[9px] opacity-60 truncate pointer-events-none">${data.location}</div>` : ''}
                 `;
             }
             grid.appendChild(slot);
@@ -391,11 +423,90 @@ function initCalendar() {
     }
 }
 
+/* --- Drag and Drop Handlers --- */
+function handleDragStart(e) {
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+    // Send source coordinates
+    const dragData = {
+        day: this.dataset.day,
+        hour: this.dataset.hour
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault(); 
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.stopPropagation(); 
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    const sourceDataString = e.dataTransfer.getData('application/json');
+    if(!sourceDataString) return; // Not our drag type
+
+    const sourcePos = JSON.parse(sourceDataString);
+    const targetDay = this.dataset.day;
+    const targetHour = parseInt(this.dataset.hour);
+    
+    const sourceKey = `schedule-${sourcePos.day}-${sourcePos.hour}`;
+    const targetKey = `schedule-${targetDay}-${targetHour}`;
+
+    // If dropped on same slot, just reset style
+    if (sourcePos.day == targetDay && sourcePos.hour == targetHour) {
+        document.querySelector(`.slot[data-day="${sourcePos.day}"][data-hour="${sourcePos.hour}"]`).style.opacity = '1';
+        return;
+    }
+
+    const sourceRaw = localStorage.getItem(sourceKey);
+    const targetRaw = localStorage.getItem(targetKey);
+
+    // 1. Prepare Source Data for Target location (Update Time)
+    let sourceObj = sourceRaw ? parseSlotData(sourceRaw, parseInt(sourcePos.hour)) : null;
+    if (sourceObj) {
+        sourceObj.start = `${targetHour.toString().padStart(2,'0')}:00`;
+        sourceObj.end = `${(targetHour+1).toString().padStart(2,'0')}:00`;
+    }
+
+    // 2. Prepare Target Data for Source location (Swap) - Update Time
+    let targetObj = targetRaw ? parseSlotData(targetRaw, targetHour) : null;
+    if (targetObj) {
+        const sHour = parseInt(sourcePos.hour);
+        targetObj.start = `${sHour.toString().padStart(2,'0')}:00`;
+        targetObj.end = `${(sHour+1).toString().padStart(2,'0')}:00`;
+    }
+
+    // 3. Update LocalStorage
+    if (sourceObj) localStorage.setItem(targetKey, JSON.stringify(sourceObj));
+    else localStorage.removeItem(targetKey);
+
+    if (targetObj) localStorage.setItem(sourceKey, JSON.stringify(targetObj));
+    else localStorage.removeItem(sourceKey);
+
+    // 4. Refresh Everything
+    this.classList.add('just-dropped'); // Prevent click modal trigger immediately
+    refreshAllViews(); // NEW: Refreshes Grid, Dots, AND Side Panel
+}
+
+/* --------------------------
+   Modal & Event Helpers
+   -------------------------- */
 function openEventModal(slot) { 
     currentSelectedSlot = slot; 
     const modal = document.getElementById('eventModal'); 
     
-    // Fill fields if data exists
     const hour = parseInt(slot.dataset.hour);
     const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
     
@@ -406,7 +517,6 @@ function openEventModal(slot) {
         document.getElementById('endTimeInput').value = data.end;
         document.getElementById('locationInput').value = data.location;
     } else {
-        // Defaults
         document.getElementById('eventInput').value = '';
         document.getElementById('startTimeInput').value = `${hour.toString().padStart(2,'0')}:00`;
         document.getElementById('endTimeInput').value = `${(hour+1).toString().padStart(2,'0')}:00`;
@@ -441,13 +551,7 @@ function saveEventFromModal() {
     localStorage.setItem(key, JSON.stringify(eventData));
     closeEventModal(); 
     
-    initCalendar();
-    renderMonthCalendar(); 
-    
-    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-    if (parseInt(currentSelectedSlot.dataset.day) === todayIndex) {
-        showDailyOverview(todayIndex, new Date());
-    }
+    refreshAllViews(); // NEW: Refreshes everything
 }
 
 function deleteEventFromModal() {
@@ -455,13 +559,8 @@ function deleteEventFromModal() {
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
     localStorage.removeItem(key); 
     closeEventModal(); 
-    initCalendar();
-    renderMonthCalendar();
     
-    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-    if (parseInt(currentSelectedSlot.dataset.day) === todayIndex) {
-        showDailyOverview(todayIndex, new Date());
-    }
+    refreshAllViews(); // NEW: Refreshes everything
 }
 
 function getSubjectColor(text) {
