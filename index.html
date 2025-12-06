@@ -8,12 +8,15 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4A90E2">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="StudentDash">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="/src/images/studentDash-192.png">
 
-    <link rel="icon" type="image/png" sizes="500x500" href="studentDash.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/src/images/studentDash.png">
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -37,7 +40,7 @@
         },
       }
     </script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/src/style/style.css">
 </head>
 <body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
 
@@ -81,6 +84,7 @@
                         <div class="flex gap-2 mb-4">
                             <button id="filterAllBtn" class="px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors">All</button>
                             <button id="filterTodayBtn" class="px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors">Today</button>
+                            <button id="filterUpcomingBtn" class="px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors">Upcoming</button>
                         </div>
 
                         <div id="todoList" class="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar min-h-[300px]"></div>
@@ -99,10 +103,15 @@
                                     <button id="nextMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
                                 </div>
                             </div>
-                            <button id="toggleViewBtn" class="flex items-center gap-1 px-3 py-1 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition">
-                                <span class="material-symbols-outlined text-sm">edit_calendar</span>
-                                <span id="toggleBtnText">Edit</span>
-                            </button>
+                            <div class="flex gap-2">
+                                <button id="downloadScheduleBtn" class="hidden items-center gap-1 px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition" title="Download PDF">
+                                    <span class="material-symbols-outlined text-sm">download</span>
+                                </button>
+                                <button id="toggleViewBtn" class="flex items-center gap-1 px-3 py-1 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition">
+                                    <span class="material-symbols-outlined text-sm">edit_calendar</span>
+                                    <span id="toggleBtnText">Edit</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div id="monthView" class="p-4 transition-all duration-300">
@@ -184,7 +193,7 @@
             <button id="closeTodoModal" class="absolute top-4 right-4 text-gray-400"><span class="material-symbols-outlined">close</span></button>
         </div>
     </div>
-
+    
     <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
         <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative">
             
@@ -198,6 +207,10 @@
                     <button id="setBtnAccount" class="settings-nav-item active">
                         <span class="material-symbols-outlined icon">person</span>
                         Account
+                    </button>
+                    <button id="setBtnNotifications" class="settings-nav-item">
+                        <span class="material-symbols-outlined icon">notifications</span>
+                        Notifications
                     </button>
                     <button id="setBtnTheme" class="settings-nav-item">
                         <span class="material-symbols-outlined icon">palette</span>
@@ -215,27 +228,27 @@
 
                 <div id="setSectionAccount" class="settings-section">
                     <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-8">Update your profile and manage your account.</p>
-
-                    <h4 class="font-bold mb-4">Profile Information</h4>
+                    
                     <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-                        <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 shrink-0">
-                            <span class="material-symbols-outlined text-4xl">person</span>
+                        <div id="profileImageContainer" class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 shrink-0 overflow-hidden relative">
+                            <span id="defaultProfileIcon" class="material-symbols-outlined text-4xl">person</span>
+                            <img id="currentProfileImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
                         </div>
                         <div class="flex flex-wrap gap-3">
-                            <button disabled class="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg opacity-50 cursor-not-allowed">Upload New</button>
-                            <button disabled class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-sm rounded-lg opacity-50 cursor-not-allowed">Remove</button>
+                            <input type="file" id="uploadProfileInput" hidden accept="image/*">
+                            <button id="uploadProfileBtn" class="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-blue-600 transition">Upload New</button>
+                            <button id="removeProfileBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-red-500 font-bold text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">Remove</button>
                         </div>
                     </div>
-
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label>
-                            <input type="text" readonly value="Student" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                            <input type="text" id="firstNameInput" value="Student" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
                         </div>
                          <div>
                             <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label>
-                            <input type="text" readonly value="User" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                            <input type="text" id="lastNameInput" value="User" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
                         </div>
                     </div>
                     <div class="mb-10">
@@ -243,51 +256,178 @@
                          <input type="email" readonly value="student.user@example.com" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
                     </div>
 
-                    <h4 class="font-bold mb-4">Password Management</h4>
-                    <div>
-                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Current Password</label>
-                         <input type="password" readonly value="password123" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed mb-4">
-                          <p class="text-xs text-gray-500 italic">Password changing is disabled in this demo.</p>
+                    <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <h4 class="text-lg font-bold mb-4">Password & Security</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Current Password</label>
+                                <input type="password" placeholder="••••••••" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">New Password</label>
+                                    <input type="password" placeholder="New Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Confirm Password</label>
+                                    <input type="password" placeholder="Confirm Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary">
+                                </div>
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <button class="px-5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-lg hover:opacity-90 transition">Update Password</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setSectionNotifications" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Notifications</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div>
+                                <h4 class="font-bold">Push Notifications</h4>
+                                <p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p>
+                            </div>
+                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div>
+                                <h4 class="font-bold">Email Notifications</h4>
+                                <p class="text-xs text-gray-500 mt-1">Receive summaries via email</p>
+                            </div>
+                            <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-bold mb-3">Alert Types</h4>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary">
+                                    <span class="text-sm font-medium">Task Deadlines</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary">
+                                    <span class="text-sm font-medium">Class Reminders (15m before)</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary">
+                                    <span class="text-sm font-medium">Daily Summary</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="setSectionTheme" class="settings-section hidden">
-                    <h3 class="text-2xl font-bold mb-6">Theme Preferences</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">Customize the look and feel of your dashboard.</p>
-
-                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div>
-                            <h4 class="font-bold mb-1">Dark Mode</h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Switch between light and dark themes.</p>
+                    <h3 class="text-2xl font-bold mb-6">Theme & Appearance</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div><h4 class="font-bold mb-1">Dark Mode</h4></div>
+                            <label class="switch"><input type="checkbox" id="settingThemeToggle"><span class="slider"></span></label>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="settingThemeToggle">
-                            <span class="slider"></span>
-                        </label>
+                        
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-bold mb-3">Accent Color</h4>
+                            <div class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-blue-500 cursor-pointer ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800"></div>
+                                <div class="w-8 h-8 rounded-full bg-purple-500 cursor-pointer hover:opacity-80 transition"></div>
+                                <div class="w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:opacity-80 transition"></div>
+                                <div class="w-8 h-8 rounded-full bg-orange-500 cursor-pointer hover:opacity-80 transition"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Currently fixed to Blue (Pro feature)</p>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div>
+                                <h4 class="font-bold">Reduce Motion</h4>
+                                <p class="text-xs text-gray-500 mt-1">Minimize animations</p>
+                            </div>
+                            <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                        </div>
                     </div>
                 </div>
 
-                 <div id="setSectionAbout" class="settings-section hidden">
+                <div id="setSectionAbout" class="settings-section hidden">
                     <h3 class="text-2xl font-bold mb-6">About</h3>
-                    
                     <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
                         <div>
-                             <h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.3</h4>
-                             <p class="text-gray-600 dark:text-gray-300 leading-relaxed">A simple, intuitive dashboard for managing student tasks and class schedules.</p>
+                             <h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.4</h4>
+                             <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                                 The ultimate dashboard for students who want to organize their life without the clutter. 
+                                 Manage tasks, track schedules, and stay productive.
+                             </p>
                         </div>
                     </div>
                     
-                    <div class="text-center pt-8 border-t border-gray-200 dark:border-gray-700">
-                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Designed & Developed by</p>
-                         <p class="font-bold text-lg">A Broke College Student</p>
+                    <div class="space-y-2">
+                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group">
+                            <span class="font-semibold text-sm">Terms of Service</span>
+                            <span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span>
+                        </a>
+                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group">
+                            <span class="font-semibold text-sm">Privacy Policy</span>
+                            <span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span>
+                        </a>
+                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group">
+                            <span class="font-semibold text-sm">Third-Party Licenses</span>
+                            <span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span>
+                        </a>
+                    <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-bold text-sm mb-2">Credits</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                            Created by <span class="font-bold text-primary">A Broke College Student</span>
+                        </p>
+                    </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <button class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Check for Updates</button>
+                        <p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <script src="script.js"></script>
-    <script src="settings.js"></script>
+    <div id="pdfPreviewModal" class="fixed inset-0 z-[70] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-5xl flex flex-col h-[90vh]">
+            
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800 rounded-t-xl shrink-0">
+                <h3 class="text-lg font-bold">Schedule Preview</h3>
+                <button id="closePdfModal" class="text-gray-500 hover:text-red-500 transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-auto p-4 md:p-6 bg-gray-100 dark:bg-gray-900 custom-scrollbar text-center">
+                <div class="inline-block align-middle">
+                    <div id="printContainer" class="bg-white text-gray-900 text-left shadow-lg p-8 rounded-lg min-w-[800px]">
+                        <div class="text-center mb-6">
+                            <h1 class="text-2xl font-black text-primary uppercase tracking-wide">Weekly Schedule</h1>
+                            <p id="printDate" class="text-gray-500 text-sm font-medium mt-1">Generated on ...</p>
+                        </div>
+                        
+                        <div id="printGrid" class="border border-gray-300 w-full">
+                            </div>
+                        
+                        <div class="mt-6 flex justify-between items-center text-xs text-gray-400 border-t pt-4">
+                            <span>StudentDash</span>
+                            <span>Created by A Broke College Student</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-white dark:bg-card-dark rounded-b-xl shrink-0">
+                <button id="cancelPdfBtn" class="px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmDownloadPdf" class="px-6 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">download</span>
+                    Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/script/script.js"></script>
+    <script src="src/script/settings.js"></script>
 </body>
 </html>
