@@ -638,4 +638,63 @@ function getSubjectColor(text) {
     if (!text) return ''; const key = text.trim().toLowerCase(); let colorMap = JSON.parse(localStorage.getItem('subjectColors')) || {};
     if (colorMap[key]) return colorMap[key]; const hue = Math.floor(Math.random() * 360);
     const newColor = `hsl(${hue}, 85%, 85%)`; colorMap[key] = newColor; localStorage.setItem('subjectColors', JSON.stringify(colorMap)); return newColor;
+
+}
+/* --------------------------
+   ANALYTICS LOGIC
+   -------------------------- */
+
+// Unique Namespace for your app (Change 'studentdash_v1_app' to something unique if you want)
+const ANALYTICS_NAMESPACE = 'studentdash_v1_public_tracker'; 
+const ANALYTICS_KEY = 'visits';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Increment Visit Count on Load
+    trackVisit();
+
+    // 2. Setup Listener to refresh count when opening Settings > About
+    const aboutBtn = document.getElementById('setBtnAbout');
+    if (aboutBtn) {
+        aboutBtn.addEventListener('click', fetchVisitReport);
+    }
+});
+
+function trackVisit() {
+    // Check if we already counted this session to avoid inflating numbers on refresh (Optional)
+    if (sessionStorage.getItem('visit_counted')) return;
+
+    fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/up`)
+        .then(res => res.json())
+        .then(data => {
+            console.log("Visit tracked:", data.count);
+            sessionStorage.setItem('visit_counted', 'true'); // Mark session as counted
+            updateAnalyticsUI(data.count);
+        })
+        .catch(err => console.warn("Analytics Error:", err));
+}
+
+function fetchVisitReport() {
+    const display = document.getElementById('analyticsTotalVisits');
+    if (!display) return;
+    
+    display.innerText = "..."; // Loading state
+
+    fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/`)
+        .then(res => res.json())
+        .then(data => {
+            updateAnalyticsUI(data.count);
+        })
+        .catch(err => {
+            console.warn("Analytics Fetch Error:", err);
+            display.innerText = "N/A";
+            display.classList.add('text-gray-500');
+        });
+}
+
+function updateAnalyticsUI(count) {
+    const display = document.getElementById('analyticsTotalVisits');
+    if (display) {
+        // Format number with commas (e.g., 1,234)
+        display.innerText = new Intl.NumberFormat().format(count);
+    }
 }
