@@ -13,9 +13,6 @@ let currentOverviewDate = new Date();
 let editingTodoId = null;
 let currentFilter = 'all'; 
 
-// PDF Library Setup
-window.jsPDF = window.jspdf.jsPDF;
-
 document.addEventListener('DOMContentLoaded', () => {
     initCalendar(); 
     renderMonthCalendar(); 
@@ -30,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     
     setupEventListeners();
-    setupPdfListeners();
+    // Check if PDF logic is loaded
+    if (typeof setupPdfListeners === "function") setupPdfListeners();
 
     setInterval(() => {
         updateDateTime();
@@ -78,142 +76,6 @@ function safeAddClick(id, fn) {
 }
 
 /* --------------------------
-   PDF PREVIEW & DOWNLOAD LOGIC
-   -------------------------- */
-function setupPdfListeners() {
-    // 1. Open Modal
-    const downloadBtn = document.getElementById('downloadScheduleBtn');
-    if(downloadBtn) downloadBtn.addEventListener('click', openPdfPreview);
-    
-    // 2. Close Modal
-    safeAddClick('closePdfModal', closePdfPreview);
-    safeAddClick('cancelPdfBtn', closePdfPreview);
-    
-    // 3. Confirm Download
-    safeAddClick('confirmDownloadPdf', generateFinalPdf);
-}
-
-function openPdfPreview() {
-    const modal = document.getElementById('pdfPreviewModal');
-    const printGrid = document.getElementById('printGrid');
-    const dateLabel = document.getElementById('printDate');
-    
-    dateLabel.innerText = "Generated on " + new Date().toLocaleDateString();
-    printGrid.innerHTML = '';
-
-    // --- 1. HEADER ROW ---
-    const headerRow = document.createElement('div');
-    headerRow.className = 'print-header-row';
-    
-    headerRow.innerHTML = `<div class="p-3 text-center flex items-center justify-center">Time</div>`; 
-    
-    days.forEach(d => {
-        headerRow.innerHTML += `<div class="p-3 text-center border-l border-gray-700 flex items-center justify-center">${d}</div>`;
-    });
-    printGrid.appendChild(headerRow);
-
-    // --- 2. DATA ROWS ---
-    for (let h = startHour; h <= endHour; h++) {
-        const row = document.createElement('div');
-        row.className = 'print-row';
-        
-        // Time Column
-        const timeCol = document.createElement('div');
-        timeCol.className = 'print-time-col';
-        timeCol.innerText = `${h}:00`;
-        row.appendChild(timeCol);
-
-        // Slots
-        for (let d = 0; d < 7; d++) {
-            const slot = document.createElement('div');
-            slot.className = 'print-slot-col';
-            
-            const rawData = localStorage.getItem(`schedule-${d}-${h}`);
-            if (rawData) {
-                const data = parseSlotData(rawData, h);
-                const color = getSubjectColor(data.subject);
-                
-                slot.innerHTML = `
-                    <div style="background-color: ${color};" class="print-event-card">
-                        <div class="font-bold text-[9px] uppercase leading-tight">${data.subject}</div>
-                        <div class="text-[8px] mt-0.5 opacity-75">${data.start} - ${data.end}</div>
-                        ${data.location ? `<div class="text-[8px] mt-0.5 opacity-60 truncate">${data.location}</div>` : ''}
-                    </div>
-                `;
-            }
-            row.appendChild(slot);
-        }
-        printGrid.appendChild(row);
-    }
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closePdfPreview() {
-    const modal = document.getElementById('pdfPreviewModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-
-function generateFinalPdf() {
-    const originalElement = document.getElementById('printContainer');
-    const btn = document.getElementById('confirmDownloadPdf');
-    const originalText = btn.innerHTML;
-
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-lg">progress_activity</span> Generating...`;
-    btn.disabled = true;
-
-    // Clone & Capture Method
-    const clone = originalElement.cloneNode(true);
-    const cloneWrapper = document.createElement('div');
-    cloneWrapper.style.position = 'fixed';
-    cloneWrapper.style.top = '-10000px'; 
-    cloneWrapper.style.left = '-10000px';
-    cloneWrapper.style.zIndex = '-1';
-    cloneWrapper.style.width = '1100px'; 
-    cloneWrapper.appendChild(clone);
-    document.body.appendChild(cloneWrapper);
-
-    html2canvas(clone, {
-        scale: 2, 
-        useCORS: true,
-        backgroundColor: '#ffffff'
-    }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('l', 'mm', 'a4'); 
-        
-        const pageWidth = pdf.internal.pageSize.getWidth();   
-        const pageHeight = pdf.internal.pageSize.getHeight(); 
-        const imgProps = pdf.getImageProperties(imgData);
-        
-        let finalPdfWidth = pageWidth;
-        let finalPdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
-        if (finalPdfHeight > pageHeight) {
-            const scaleFactor = pageHeight / finalPdfHeight;
-            finalPdfWidth = pageWidth * scaleFactor;
-            finalPdfHeight = pageHeight;
-        }
-
-        const xPos = (pageWidth - finalPdfWidth) / 2;
-        pdf.addImage(imgData, 'PNG', xPos, 0, finalPdfWidth, finalPdfHeight);
-        pdf.save('StudentDash_Schedule.pdf');
-
-        document.body.removeChild(cloneWrapper);
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        closePdfPreview();
-    }).catch(err => {
-        console.error("PDF Error:", err);
-        alert("Error generating PDF.");
-        if (document.body.contains(cloneWrapper)) document.body.removeChild(cloneWrapper);
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
-}
-
-/* --------------------------
    DATA PARSING HELPER
    -------------------------- */
 function parseSlotData(rawData, defaultHour) {
@@ -233,7 +95,7 @@ function parseSlotData(rawData, defaultHour) {
 }
 
 /* --------------------------
-   Todo Logic (UPDATED)
+   Todo Logic (With Animation)
    -------------------------- */
 function setFilter(type) {
     currentFilter = type;
@@ -353,15 +215,22 @@ function renderTodos(todos) {
         return tA - tB;
     });
     if (filteredTodos.length === 0) {
-        list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic">No tasks found.</div>`;
+        list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic animate-fade-in">No tasks found.</div>`;
         return;
     }
-    filteredTodos.forEach(t => createTodoElement(t, list));
+    // Render with index for staggered animation
+    filteredTodos.forEach((t, index) => createTodoElement(t, list, index));
 }
 
-function createTodoElement(todoObj, container) {
+function createTodoElement(todoObj, container, index = 0) {
     const div = document.createElement('div');
-    div.className = "flex items-center gap-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group border border-transparent hover:border-gray-200 dark:hover:border-gray-600 cursor-pointer";
+    // Add "task-item" for animation
+    div.className = "task-item flex items-center gap-4 p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 group cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
+    
+    // Stagger delay
+    const delay = Math.min(index * 0.05, 0.5);
+    div.style.animationDelay = `${delay}s`;
+
     div.dataset.id = todoObj.id; div.dataset.deadlineIso = todoObj.deadlineISO || "";
 
     let dotColor = 'bg-yellow-500';
@@ -376,10 +245,10 @@ function createTodoElement(todoObj, container) {
                 <span class="hidden countdown-timer font-mono text-primary font-bold"></span>
             </div>
         </div>
-        <div class="w-3 h-3 rounded-full ${dotColor} shrink-0"></div>
-        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="edit-btn text-blue-500 hover:bg-blue-100 p-1 rounded" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>
-            <button class="delete-btn text-red-500 hover:bg-red-100 p-1 rounded" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>
+        <div class="w-3 h-3 rounded-full ${dotColor} shrink-0 ring-2 ring-white dark:ring-gray-700 shadow-sm"></div>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+            <button class="edit-btn text-blue-500 hover:bg-blue-50 p-1.5 rounded-md transition"><span class="material-symbols-outlined text-lg">edit</span></button>
+            <button class="delete-btn text-red-500 hover:bg-red-50 p-1.5 rounded-md transition"><span class="material-symbols-outlined text-lg">delete</span></button>
         </div>
     `;
     div.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); initiateEditTodo(todoObj.id); });
@@ -388,7 +257,7 @@ function createTodoElement(todoObj, container) {
 }
 
 /* --------------------------
-   Utils (UPDATED)
+   Utils
    -------------------------- */
 function updateCountdowns() {
     const now = new Date();
@@ -407,8 +276,7 @@ function updateCountdowns() {
             timerSpan.classList.remove('hidden');
             timerSpan.classList.remove('text-red-500');
             
-            // Fix: Logic for > 24 hours format
-            const oneDay = 86400000; // 24 * 60 * 60 * 1000
+            const oneDay = 86400000; 
             if (diff > oneDay) {
                 const d = Math.floor(diff / oneDay);
                 const h = Math.floor((diff % oneDay) / 3600000);
@@ -480,7 +348,6 @@ function toggleCalendarView() {
     }
 }
 
-// Refresh all views
 function refreshAllViews() {
     initCalendar(); // Update Weekly Editor
     renderMonthCalendar(); // Update Month Dots
@@ -527,7 +394,7 @@ function renderMonthCalendar() {
 }
 
 function showDailyOverview(dayIndex, dateObj) {
-    currentOverviewDate = dateObj; // Update Global State
+    currentOverviewDate = dateObj; 
 
     const container = document.getElementById('dailyOverview');
     const label = document.getElementById('overviewDateLabel');
@@ -535,6 +402,8 @@ function showDailyOverview(dayIndex, dateObj) {
     if(dateObj) label.innerText = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric'});
     
     let hasClass = false;
+    let delayCounter = 0; // ANIMATION STAGGER COUNTER
+
     for (let h = startHour; h <= endHour; h++) {
         const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
         if (rawData) {
@@ -543,9 +412,12 @@ function showDailyOverview(dayIndex, dateObj) {
             const color = getSubjectColor(data.subject); 
             
             const div = document.createElement('div');
-            div.className = "flex items-start gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
+            // Added 'class-entry-animate'
+            div.className = "class-entry-animate flex items-start gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
+            div.style.animationDelay = `${delayCounter * 0.1}s`; // Stagger delay
+            
             div.innerHTML = `
-                <div class="w-1 h-12 rounded-full mt-1" style="background-color: ${color}"></div>
+                <div class="w-1 h-12 rounded-full mt-1 shadow-sm" style="background-color: ${color}"></div>
                 <div class="flex-1">
                     <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${data.subject}</p>
                     <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -560,9 +432,10 @@ function showDailyOverview(dayIndex, dateObj) {
                 </div>
             `;
             container.appendChild(div);
+            delayCounter++;
         }
     }
-    if (!hasClass) container.innerHTML = `<div class="text-center py-2 text-gray-400 text-xs italic">No classes.</div>`;
+    if (!hasClass) container.innerHTML = `<div class="text-center py-2 text-gray-400 text-xs italic animate-fade-in">No classes.</div>`;
 }
 
 function initCalendar() {
@@ -571,6 +444,9 @@ function initCalendar() {
     grid.innerHTML = '';
     const timeHeader = document.createElement('div'); timeHeader.className = 'header-cell'; timeHeader.innerText = 'TIME'; grid.appendChild(timeHeader);
     days.forEach(day => { const dh = document.createElement('div'); dh.className = 'header-cell'; dh.innerText = day; grid.appendChild(dh); });
+    
+    let gridDelayCounter = 0; // ANIMATION COUNTER FOR WEEK VIEW
+
     for (let hour = startHour; hour <= endHour; hour++) {
         const tLabel = document.createElement('div'); tLabel.className = 'time-label'; tLabel.innerText = `${hour}:00`; grid.appendChild(tLabel);
         days.forEach((d, index) => {
@@ -579,13 +455,11 @@ function initCalendar() {
             slot.dataset.day = index; 
             slot.dataset.hour = hour;
             
-            // Drag Drop Events
             slot.addEventListener('dragover', handleDragOver);
             slot.addEventListener('dragenter', handleDragEnter);
             slot.addEventListener('dragleave', handleDragLeave);
             slot.addEventListener('drop', handleDrop);
 
-            // Click event
             slot.addEventListener('click', (e) => {
                 if(slot.classList.contains('just-dropped')) {
                     slot.classList.remove('just-dropped');
@@ -600,15 +474,18 @@ function initCalendar() {
                 slot.style.backgroundColor = getSubjectColor(data.subject); 
                 slot.style.color = '#333'; 
                 
-                // DRAGGABLE
                 slot.draggable = true;
                 slot.addEventListener('dragstart', handleDragStart);
 
+                // Add animation class and inline delay to inner content
                 slot.innerHTML = `
-                    <div class="font-bold truncate pointer-events-none">${data.subject}</div>
-                    <div class="text-[10px] opacity-70 leading-tight pointer-events-none">${data.start}-${data.end}</div>
-                    ${data.location ? `<div class="text-[9px] opacity-60 truncate pointer-events-none">${data.location}</div>` : ''}
+                    <div class="class-entry-animate w-full h-full flex flex-col justify-center items-center" style="animation-delay: ${gridDelayCounter * 0.05}s">
+                        <div class="font-bold truncate pointer-events-none">${data.subject}</div>
+                        <div class="text-[10px] opacity-70 leading-tight pointer-events-none">${data.start}-${data.end}</div>
+                        ${data.location ? `<div class="text-[9px] opacity-60 truncate pointer-events-none">${data.location}</div>` : ''}
+                    </div>
                 `;
+                gridDelayCounter++;
             }
             grid.appendChild(slot);
         });
@@ -655,7 +532,6 @@ function handleDrop(e) {
     const sourceRaw = localStorage.getItem(sourceKey);
     const targetRaw = localStorage.getItem(targetKey);
 
-    // Update Times
     let sourceObj = sourceRaw ? parseSlotData(sourceRaw, parseInt(sourcePos.hour)) : null;
     if (sourceObj) {
         sourceObj.start = `${targetHour.toString().padStart(2,'0')}:00`;
