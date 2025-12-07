@@ -7,7 +7,7 @@ const endHour = 20;
 
 let currentSelectedSlot = null;
 let navDate = new Date(); 
-let currentOverviewDate = new Date(); 
+let currentOverviewDate = new Date(); // Stores the currently selected date
 
 // Todo State
 let editingTodoId = null;
@@ -15,9 +15,12 @@ let currentFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
     initCalendar(); 
+    
+    // Set initial overview to today
+    currentOverviewDate = new Date(); 
     renderMonthCalendar(); 
     
-    // Default Calendar View
+    // Default Calendar View logic
     const todayIndex = new Date().getDay(); 
     const gridIndex = todayIndex === 0 ? 6 : todayIndex - 1;
     showDailyOverview(gridIndex, new Date());
@@ -27,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     
     setupEventListeners();
-    // Check if PDF logic is loaded
     if (typeof setupPdfListeners === "function") setupPdfListeners();
 
     setInterval(() => {
@@ -95,7 +97,7 @@ function parseSlotData(rawData, defaultHour) {
 }
 
 /* --------------------------
-   Todo Logic (With Animation)
+   Todo Logic
    -------------------------- */
 function setFilter(type) {
     currentFilter = type;
@@ -218,16 +220,13 @@ function renderTodos(todos) {
         list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic animate-fade-in">No tasks found.</div>`;
         return;
     }
-    // Render with index for staggered animation
     filteredTodos.forEach((t, index) => createTodoElement(t, list, index));
 }
 
 function createTodoElement(todoObj, container, index = 0) {
     const div = document.createElement('div');
-    // Add "task-item" for animation
     div.className = "task-item flex items-center gap-4 p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 group cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
     
-    // Stagger delay
     const delay = Math.min(index * 0.05, 0.5);
     div.style.animationDelay = `${delay}s`;
 
@@ -331,6 +330,7 @@ function toggleCalendarView() {
         downloadBtn.classList.add('hidden');
         downloadBtn.classList.remove('flex');
 
+        // Re-render to ensure blue circle stays
         renderMonthCalendar();
     } else {
         // --- Switching to WEEK VIEW (Editor) ---
@@ -352,11 +352,11 @@ function refreshAllViews() {
     initCalendar(); // Update Weekly Editor
     renderMonthCalendar(); // Update Month Dots
     
-    // Refresh the Side Panel based on whatever date was last selected
     const dayIndex = currentOverviewDate.getDay() === 0 ? 6 : currentOverviewDate.getDay() - 1;
     showDailyOverview(dayIndex, currentOverviewDate);
 }
 
+// FIX APPLIED HERE: Re-apply 'selected-day' based on currentOverviewDate
 function renderMonthCalendar() {
     const grid = document.getElementById('monthGrid');
     const monthLabel = document.getElementById('currentMonthLabel');
@@ -367,12 +367,27 @@ function renderMonthCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+    
     const today = new Date();
+    
     for (let d = 1; d <= daysInMonth; d++) {
         const dayDiv = document.createElement('div');
         dayDiv.className = "month-day text-gray-700 dark:text-gray-300";
         dayDiv.innerText = d;
-        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dayDiv.classList.add('today');
+        
+        // Today Check
+        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            dayDiv.classList.add('today');
+        }
+
+        // --- FIX: Check if this day is the Selected Overview Date ---
+        if (currentOverviewDate && 
+            d === currentOverviewDate.getDate() && 
+            month === currentOverviewDate.getMonth() && 
+            year === currentOverviewDate.getFullYear()) {
+            dayDiv.classList.add('selected-day');
+        }
+
         let dayOfWeek = new Date(year, month, d).getDay(); 
         let arrayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
         
@@ -384,10 +399,15 @@ function renderMonthCalendar() {
         if (hasClass) {
             const dot = document.createElement('div'); dot.className = "class-dot"; dayDiv.appendChild(dot);
         }
+        
         dayDiv.addEventListener('click', () => {
             document.querySelectorAll('.month-day').forEach(el => el.classList.remove('selected-day'));
             dayDiv.classList.add('selected-day');
-            showDailyOverview(arrayIndex, new Date(year, month, d));
+            
+            // Update the Global State
+            currentOverviewDate = new Date(year, month, d);
+            
+            showDailyOverview(arrayIndex, currentOverviewDate);
         });
         grid.appendChild(dayDiv);
     }
@@ -402,7 +422,7 @@ function showDailyOverview(dayIndex, dateObj) {
     if(dateObj) label.innerText = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric'});
     
     let hasClass = false;
-    let delayCounter = 0; // ANIMATION STAGGER COUNTER
+    let delayCounter = 0; 
 
     for (let h = startHour; h <= endHour; h++) {
         const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
@@ -412,9 +432,8 @@ function showDailyOverview(dayIndex, dateObj) {
             const color = getSubjectColor(data.subject); 
             
             const div = document.createElement('div');
-            // Added 'class-entry-animate'
             div.className = "class-entry-animate flex items-start gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
-            div.style.animationDelay = `${delayCounter * 0.1}s`; // Stagger delay
+            div.style.animationDelay = `${delayCounter * 0.1}s`; 
             
             div.innerHTML = `
                 <div class="w-1 h-12 rounded-full mt-1 shadow-sm" style="background-color: ${color}"></div>
@@ -445,7 +464,7 @@ function initCalendar() {
     const timeHeader = document.createElement('div'); timeHeader.className = 'header-cell'; timeHeader.innerText = 'TIME'; grid.appendChild(timeHeader);
     days.forEach(day => { const dh = document.createElement('div'); dh.className = 'header-cell'; dh.innerText = day; grid.appendChild(dh); });
     
-    let gridDelayCounter = 0; // ANIMATION COUNTER FOR WEEK VIEW
+    let gridDelayCounter = 0; 
 
     for (let hour = startHour; hour <= endHour; hour++) {
         const tLabel = document.createElement('div'); tLabel.className = 'time-label'; tLabel.innerText = `${hour}:00`; grid.appendChild(tLabel);
@@ -477,7 +496,6 @@ function initCalendar() {
                 slot.draggable = true;
                 slot.addEventListener('dragstart', handleDragStart);
 
-                // Add animation class and inline delay to inner content
                 slot.innerHTML = `
                     <div class="class-entry-animate w-full h-full flex flex-col justify-center items-center" style="animation-delay: ${gridDelayCounter * 0.05}s">
                         <div class="font-bold truncate pointer-events-none">${data.subject}</div>

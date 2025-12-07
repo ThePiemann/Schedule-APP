@@ -131,13 +131,72 @@ input:focus { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74, 144, 
 .class-entry-animate { animation: slideInLeftShort 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; opacity: 0; }
 
 /* --- SETTINGS SIDEBAR --- */
-.settings-nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; color: #6b7280; transition: all 0.2s; justify-content: center; flex: 1; white-space: nowrap; position: relative; overflow: hidden; }
-@media (min-width: 768px) { .settings-nav-item { justify-content: flex-start; width: 100%; } }
+.settings-nav-item {
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+    padding: 10px 16px; 
+    border-radius: 12px; 
+    font-weight: 600; 
+    font-size: 0.9rem;
+    color: #6b7280; 
+    transition: all 0.2s;
+    justify-content: center; 
+    
+    /* FIX: Prevent squashing on mobile, allow scroll */
+    flex: none; 
+    white-space: nowrap; 
+    position: relative; 
+    overflow: hidden;
+}
+
+/* Dark mode text colors */
 .dark .settings-nav-item { color: #9ca3af; }
+
+/* Hover States */
 .settings-nav-item:hover { background-color: rgba(0,0,0,0.05); color: #111827; }
 .dark .settings-nav-item:hover { background-color: rgba(255,255,255,0.05); color: white; }
-.settings-nav-item.active { background-color: rgba(74, 144, 226, 0.1); color: #4A90E2; }
-.settings-nav-item.active::before { content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 4px; background-color: #4A90E2; border-radius: 0 4px 4px 0; }
+
+/* Active Background */
+.settings-nav-item.active { 
+    background-color: rgba(74, 144, 226, 0.1); 
+    color: #4A90E2; 
+}
+
+/* FIX: Active Indicator Logic (Mobile First) */
+.settings-nav-item.active::before {
+    content: ''; 
+    position: absolute; 
+    background-color: #4A90E2;
+    
+    /* MOBILE: Bottom Line */
+    bottom: 0; 
+    left: 20%; 
+    right: 20%; 
+    height: 3px; 
+    width: auto;
+    top: auto; /* Reset top */
+    border-radius: 3px 3px 0 0;
+}
+
+/* DESKTOP: Switch to Vertical Layout */
+@media (min-width: 768px) {
+    .settings-nav-item {
+        justify-content: flex-start;
+        width: 100%;
+    }
+    
+    /* DESKTOP: Left Side Line */
+    .settings-nav-item.active::before {
+        left: 0; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 4px; 
+        height: auto; 
+        right: auto; /* Reset right */
+        border-radius: 0 4px 4px 0;
+    }
+}
 
 /* --- SWITCH TOGGLE --- */
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
