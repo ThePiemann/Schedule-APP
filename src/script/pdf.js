@@ -44,22 +44,17 @@ function openPdfPreview() {
 }
 
 function renderPdfGrid() {
+    // ... (Keep existing toggle logic) ...
     const printGrid = document.getElementById('printGrid');
     const dateLabel = document.getElementById('printDate');
     const trimToggle = document.getElementById('pdfTrimToggle');
     
-    // Default Range
     let startH = 7;
     let endH = 20;
 
-    // --- SMART CROP LOGIC ---
-    // If toggle is NOT checked (Disabled), we calculate the actual range
+    // Smart Crop Logic
     if (trimToggle && !trimToggle.checked) {
-        let foundMin = 20;
-        let foundMax = 7;
-        let hasData = false;
-
-        // Scan all days (0-6) and hours (7-20)
+        let foundMin = 20; let foundMax = 7; let hasData = false;
         for (let h = 7; h <= 20; h++) {
             for (let d = 0; d < 7; d++) {
                 if (localStorage.getItem(`schedule-${d}-${h}`)) {
@@ -69,22 +64,15 @@ function renderPdfGrid() {
                 }
             }
         }
-
-        if (hasData) {
-            startH = foundMin;
-            endH = foundMax; 
-            // Optional: Add 1 hour buffer at bottom if desired, 
-            // but user asked to cut exactly to the slot.
-        }
+        if (hasData) { startH = foundMin; endH = foundMax; }
     }
-    // ------------------------
 
     const _days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     
     dateLabel.innerText = "Generated on " + new Date().toLocaleDateString();
     printGrid.innerHTML = '';
 
-    // 1. Render Header
+    // Header
     const headerRow = document.createElement('div');
     headerRow.className = 'print-header-row';
     headerRow.innerHTML = `<div class="p-3 text-center flex items-center justify-center">Time</div>`; 
@@ -93,7 +81,7 @@ function renderPdfGrid() {
     });
     printGrid.appendChild(headerRow);
 
-    // 2. Render Rows (based on calculated startH and endH)
+    // Rows
     for (let h = startH; h <= endH; h++) {
         const row = document.createElement('div');
         row.className = 'print-row';
@@ -116,15 +104,35 @@ function renderPdfGrid() {
 
                 let color = '#e5e7eb';
                 const colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
-                const key = data.subject.trim().toLowerCase();
-                if(colorMap[key]) color = colorMap[key];
+                if (data.color) color = data.color;
+                else {
+                    const key = data.subject.trim().toLowerCase();
+                    if(colorMap[key]) color = colorMap[key];
+                }
                 
-                // Styles: Added 'mt-1.5' to location for spacing
+                if(!data.weekType) data.weekType = "every";
+                if(!data.type) data.type = "";
+
+                // --- PDF CLEAN UI (Matching Grid) ---
                 slot.innerHTML = `
-                    <div style="background-color: ${color};" class="print-event-card p-1.5 flex flex-col justify-center h-full">
-                        <div class="font-black text-[12px] uppercase leading-tight tracking-wide text-gray-800">${data.subject}</div>
-                        <div class="text-[10px] mt-1 font-bold text-gray-600">${data.start} - ${data.end}</div>
-                        ${data.location ? `<div class="text-[10px] mt-1.5 font-bold text-gray-700 break-words leading-tight inline-block mx-auto opacity-80">${data.location}</div>` : ''}
+                    <div style="background-color: ${color};" class="print-event-card w-full h-full relative p-1 box-border">
+                        
+                        ${data.weekType !== 'every' ? 
+                            `<div class="absolute top-1 left-1 text-[8px] font-black uppercase tracking-wider text-gray-500 opacity-60">${data.weekType}</div>` 
+                            : ''}
+                        
+                        ${data.location ? 
+                            `<div class="absolute top-1 right-1 text-[9px] font-bold text-gray-500 opacity-70">${data.location}</div>` 
+                            : ''}
+
+                        <div class="absolute inset-0 flex flex-col justify-center items-center px-4">
+                            <div class="font-black text-[12px] uppercase leading-tight tracking-wide text-gray-800 text-center">${data.subject}</div>
+                            <div class="text-[10px] font-bold text-gray-500 mt-0.5">${data.start} - ${data.end}</div>
+                        </div>
+
+                        ${data.type ? 
+                            `<div class="absolute bottom-1 right-1 text-[8px] font-bold uppercase text-gray-400 tracking-wider opacity-80">${data.type}</div>` 
+                            : ''}
                     </div>
                 `;
             }

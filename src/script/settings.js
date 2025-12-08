@@ -3,40 +3,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSettings() {
-    // 1. Setup Theme
     loadTheme();
-    
-    // 2. Setup Account Data
     initAccountSettings();
-    
-    // 3. Setup Toggles
+    initScheduleSettings(); // NEW: Load schedule settings
+
+    // Toggles
     const themeToggle = document.getElementById('settingThemeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('change', toggleTheme);
-    }
+    if (themeToggle) themeToggle.addEventListener('change', toggleTheme);
 
     const vibrantToggle = document.getElementById('settingVibrantToggle');
-    if (vibrantToggle) {
-        vibrantToggle.addEventListener('change', toggleVibrant);
-    }
+    if (vibrantToggle) vibrantToggle.addEventListener('change', toggleVibrant);
 
     const weatherToggle = document.getElementById('settingWeatherToggle');
     if (weatherToggle) {
         weatherToggle.addEventListener('change', (e) => {
-            if (typeof handleWeatherToggle === "function") {
-                handleWeatherToggle(e.target.checked);
-            }
+            if (typeof handleWeatherToggle === "function") handleWeatherToggle(e.target.checked);
         });
     }
 
-    // 4. Setup Modal Logic
+    // Modal Logic
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsBtn = document.getElementById('closeSettingsModal');
 
     if (settingsBtn && settingsModal) {
         settingsBtn.addEventListener('click', () => {
-            switchSettingsTab('Account');
+            switchSettingsTab('Account'); // Default tab
             settingsModal.classList.remove('hidden');
             settingsModal.classList.add('flex');
         });
@@ -49,14 +41,23 @@ function initSettings() {
         });
     }
 
-    // REMOVED: The window.onclick listener that closed the modal on outside click
-    // This ensures the modal stays open until the user explicitly clicks the close button.
-
     setupSettingsNavigation();
 }
 
+function initScheduleSettings() {
+    const toggle = document.getElementById('settingEvenOddToggle');
+    const saved = localStorage.getItem('isEvenOddEnabled') === 'true';
+    if(toggle) {
+        toggle.checked = saved;
+        toggle.addEventListener('change', (e) => {
+            localStorage.setItem('isEvenOddEnabled', e.target.checked);
+        });
+    }
+}
+
 function setupSettingsNavigation() {
-    const tabs = ['Account', 'Notifications', 'Theme', 'About'];
+    // Added 'Schedule' to the tabs list
+    const tabs = ['Account', 'Schedule', 'Notifications', 'Theme', 'About'];
     tabs.forEach(tab => {
         const btn = document.getElementById(`setBtn${tab}`);
         if (btn) {
@@ -66,7 +67,7 @@ function setupSettingsNavigation() {
 }
 
 function switchSettingsTab(activeTabName) {
-    const tabs = ['Account', 'Notifications', 'Theme', 'About'];
+    const tabs = ['Account', 'Schedule', 'Notifications', 'Theme', 'About'];
     tabs.forEach(tab => {
         const btn = document.getElementById(`setBtn${tab}`);
         const section = document.getElementById(`setSection${tab}`);
@@ -178,7 +179,7 @@ function initAccountSettings() {
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
             const data = {};
-            const keys = ['userFirstName', 'userLastName', 'userProfileImage', 'isDarkMode', 'isVibrant', 'isWeatherEnabled', 'advancedTodos', 'subjectColors'];
+            const keys = ['userFirstName', 'userLastName', 'userProfileImage', 'isDarkMode', 'isVibrant', 'isWeatherEnabled', 'advancedTodos', 'subjectColors', 'isEvenOddEnabled'];
             
             // Fixed keys
             keys.forEach(k => {

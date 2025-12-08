@@ -7,7 +7,10 @@ const endHour = 20;
 
 let currentSelectedSlot = null;
 let navDate = new Date(); 
-let currentOverviewDate = new Date(); // Stores the currently selected date
+let currentOverviewDate = new Date(); 
+
+// New State
+let isEvenWeek = false;
 
 // Todo State
 let editingTodoId = null;
@@ -16,20 +19,20 @@ let currentFilter = 'all';
 document.addEventListener('DOMContentLoaded', () => {
     initCalendar(); 
     
-    // Set initial overview to today
     currentOverviewDate = new Date(); 
+    initWeekCounter(); // Determines isEvenWeek
+    
     renderMonthCalendar(); 
     
-    // Default Calendar View logic
     const todayIndex = new Date().getDay(); 
     const gridIndex = todayIndex === 0 ? 6 : todayIndex - 1;
     showDailyOverview(gridIndex, new Date());
 
     loadTodos();
-    initWeekCounter();
     updateDateTime();
     
     setupEventListeners();
+    setupModalInputs(); // New listeners for color palette/buttons
     if (typeof setupPdfListeners === "function") setupPdfListeners();
 
     setInterval(() => {
@@ -39,24 +42,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
-    // Calendar Events
     safeAddClick('closeEventModal', closeEventModal);
     safeAddClick('saveEventBtn', saveEventFromModal);
     safeAddClick('deleteEventBtn', deleteEventFromModal);
     document.getElementById('eventInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEventFromModal(); });
 
-    // Task Events
     safeAddClick('addTodoBtn', initiateAddTodo);
     document.getElementById('todoInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') initiateAddTodo(); });
     safeAddClick('closeTodoModal', closeTodoModal);
     safeAddClick('saveTodoDetailsBtn', finalizeAddTodo);
     
-    // Filter Buttons
     document.getElementById('filterAllBtn').addEventListener('click', () => setFilter('all'));
     document.getElementById('filterTodayBtn').addEventListener('click', () => setFilter('today'));
     document.getElementById('filterUpcomingBtn').addEventListener('click', () => setFilter('upcoming'));
 
-    // Priority Selection
     document.querySelectorAll('.p-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
@@ -64,12 +63,40 @@ function setupEventListeners() {
         });
     });
 
-    // View Toggles
     document.getElementById('toggleViewBtn').addEventListener('click', toggleCalendarView);
-    
-    // Month Nav
     document.getElementById('prevMonth').addEventListener('click', () => { navDate.setMonth(navDate.getMonth() - 1); renderMonthCalendar(); });
     document.getElementById('nextMonth').addEventListener('click', () => { navDate.setMonth(navDate.getMonth() + 1); renderMonthCalendar(); });
+}
+
+function setupModalInputs() {
+    // 1. Color Palette Logic
+    const colorBtns = document.querySelectorAll('.color-btn');
+    colorBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Reset rings
+            colorBtns.forEach(b => {
+                b.classList.remove('ring-offset-2', 'ring-gray-400', 'scale-110');
+                b.classList.add('ring-transparent');
+            });
+            // Select this one
+            const target = e.target;
+            target.classList.remove('ring-transparent');
+            target.classList.add('ring-offset-2', 'ring-gray-400', 'scale-110');
+            document.getElementById('selectedColorInput').value = target.dataset.color;
+        });
+    });
+
+    // 2. Week Type Logic
+    const weekBtns = document.querySelectorAll('.week-type-btn');
+    weekBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            weekBtns.forEach(b => {
+                b.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700 transition";
+            });
+            e.target.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded shadow-sm bg-white dark:bg-gray-600 text-primary transition";
+            document.getElementById('weekTypeInput').value = e.target.dataset.val;
+        });
+    });
 }
 
 function safeAddClick(id, fn) {
@@ -78,21 +105,32 @@ function safeAddClick(id, fn) {
 }
 
 /* --------------------------
-   DATA PARSING HELPER
+   DATA PARSING
    -------------------------- */
 function parseSlotData(rawData, defaultHour) {
     if (!rawData) return null;
     try {
         if (rawData.startsWith('{')) {
-            return JSON.parse(rawData);
+            const data = JSON.parse(rawData);
+            // Ensure fields exist for legacy data
+            if(!data.type) data.type = "";
+            if(!data.teacher) data.teacher = "";
+            if(!data.color) data.color = "#F3F4F6"; // Default color
+            if(!data.weekType) data.weekType = "every";
+            return data;
         }
     } catch(e) {}
     
+    // Fallback for very old simple string data
     return {
         subject: rawData,
         start: `${defaultHour.toString().padStart(2,'0')}:00`,
         end: `${(defaultHour + 1).toString().padStart(2,'0')}:00`,
-        location: ""
+        location: "",
+        type: "",
+        teacher: "",
+        color: "#F3F4F6",
+        weekType: "every"
     };
 }
 
@@ -293,13 +331,17 @@ function updateDateTime() {
     const d = document.getElementById('datetimeDisplay');
     if(d) d.innerText = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' });
 }
+
 function initWeekCounter() {
     const d = new Date();
     const weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    isEvenWeek = (weekNum % 2 === 0);
+
     const div = document.getElementById('weekDisplay');
-    div.innerText = weekNum % 2 === 0 ? "Week: EVEN" : "Week: ODD";
-    div.className = weekNum % 2 === 0 ? "text-xs font-bold px-3 py-1 rounded bg-green-100 text-green-700" : "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
+    div.innerText = isEvenWeek ? "Week: EVEN" : "Week: ODD";
+    div.className = isEvenWeek ? "text-xs font-bold px-3 py-1 rounded bg-purple-100 text-purple-700" : "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
 }
+
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -349,14 +391,12 @@ function toggleCalendarView() {
 }
 
 function refreshAllViews() {
-    initCalendar(); // Update Weekly Editor
-    renderMonthCalendar(); // Update Month Dots
-    
+    initCalendar(); 
+    renderMonthCalendar(); 
     const dayIndex = currentOverviewDate.getDay() === 0 ? 6 : currentOverviewDate.getDay() - 1;
     showDailyOverview(dayIndex, currentOverviewDate);
 }
 
-// FIX APPLIED HERE: Re-apply 'selected-day' based on currentOverviewDate
 function renderMonthCalendar() {
     const grid = document.getElementById('monthGrid');
     const monthLabel = document.getElementById('currentMonthLabel');
@@ -375,16 +415,10 @@ function renderMonthCalendar() {
         dayDiv.className = "month-day text-gray-700 dark:text-gray-300";
         dayDiv.innerText = d;
         
-        // Today Check
         if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
             dayDiv.classList.add('today');
         }
-
-        // --- FIX: Check if this day is the Selected Overview Date ---
-        if (currentOverviewDate && 
-            d === currentOverviewDate.getDate() && 
-            month === currentOverviewDate.getMonth() && 
-            year === currentOverviewDate.getFullYear()) {
+        if (currentOverviewDate && d === currentOverviewDate.getDate() && month === currentOverviewDate.getMonth() && year === currentOverviewDate.getFullYear()) {
             dayDiv.classList.add('selected-day');
         }
 
@@ -395,7 +429,6 @@ function renderMonthCalendar() {
         for (let h = startHour; h <= endHour; h++) {
             if (localStorage.getItem(`schedule-${arrayIndex}-${h}`)) hasClass = true;
         }
-
         if (hasClass) {
             const dot = document.createElement('div'); dot.className = "class-dot"; dayDiv.appendChild(dot);
         }
@@ -403,10 +436,7 @@ function renderMonthCalendar() {
         dayDiv.addEventListener('click', () => {
             document.querySelectorAll('.month-day').forEach(el => el.classList.remove('selected-day'));
             dayDiv.classList.add('selected-day');
-            
-            // Update the Global State
             currentOverviewDate = new Date(year, month, d);
-            
             showDailyOverview(arrayIndex, currentOverviewDate);
         });
         grid.appendChild(dayDiv);
@@ -415,7 +445,6 @@ function renderMonthCalendar() {
 
 function showDailyOverview(dayIndex, dateObj) {
     currentOverviewDate = dateObj; 
-
     const container = document.getElementById('dailyOverview');
     const label = document.getElementById('overviewDateLabel');
     container.innerHTML = "";
@@ -427,27 +456,46 @@ function showDailyOverview(dayIndex, dateObj) {
     for (let h = startHour; h <= endHour; h++) {
         const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
         if (rawData) {
-            hasClass = true;
             const data = parseSlotData(rawData, h);
-            const color = getSubjectColor(data.subject); 
+            hasClass = true;
             
             const div = document.createElement('div');
-            div.className = "class-entry-animate flex items-start gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
+            // Changed 'items-start' to 'items-stretch' to make the color bar expand
+            div.className = "class-entry-animate flex items-stretch gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
             div.style.animationDelay = `${delayCounter * 0.1}s`; 
             
             div.innerHTML = `
-                <div class="w-1 h-12 rounded-full mt-1 shadow-sm" style="background-color: ${color}"></div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${data.subject}</p>
-                    <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        <span class="material-symbols-outlined text-[10px]">schedule</span>
-                        <span>${data.start} - ${data.end}</span>
+                <div class="w-1.5 rounded-full shadow-sm flex-shrink-0" style="background-color: ${data.color}"></div>
+                
+                <div class="flex-1 flex justify-between gap-2 py-1">
+                    <div class="flex flex-col justify-center">
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-200 leading-tight">${data.subject}</p>
+                        
+                        <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span class="material-symbols-outlined text-[10px]">schedule</span>
+                            <span>${data.start} - ${data.end}</span>
+                        </div>
+
+                        ${data.location ? `
+                        <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <span class="material-symbols-outlined text-[10px]">location_on</span>
+                            <span>${data.location}</span>
+                        </div>` : ''}
+                        
+                        ${data.teacher ? `
+                        <div class="flex items-center gap-1 text-xs text-primary/80 dark:text-blue-400 mt-1 font-medium">
+                            <span class="material-symbols-outlined text-[10px]">person</span>
+                            <span>${data.teacher}</span>
+                        </div>` : ''}
                     </div>
-                    ${data.location ? `
-                    <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        <span class="material-symbols-outlined text-[10px]">location_on</span>
-                        <span>${data.location}</span>
-                    </div>` : ''}
+
+                    <div class="flex flex-col items-end gap-1">
+                        ${data.type ? `<span class="text-[9px] uppercase font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded tracking-wide">${data.type}</span>` : ''}
+                        
+                        ${data.weekType !== 'every' ? `
+                        <span class="text-[8px] uppercase font-bold border border-gray-200 dark:border-gray-600 text-gray-400 px-1.5 py-0.5 rounded tracking-wide whitespace-nowrap">${data.weekType} ONLY</span>
+                        ` : ''}
+                    </div>
                 </div>
             `;
             container.appendChild(div);
@@ -470,37 +518,48 @@ function initCalendar() {
         const tLabel = document.createElement('div'); tLabel.className = 'time-label'; tLabel.innerText = `${hour}:00`; grid.appendChild(tLabel);
         days.forEach((d, index) => {
             const slot = document.createElement('div'); 
-            slot.className = 'slot'; 
+            slot.className = 'slot group'; 
             slot.dataset.day = index; 
             slot.dataset.hour = hour;
             
+            // Listeners
             slot.addEventListener('dragover', handleDragOver);
             slot.addEventListener('dragenter', handleDragEnter);
             slot.addEventListener('dragleave', handleDragLeave);
             slot.addEventListener('drop', handleDrop);
-
             slot.addEventListener('click', (e) => {
-                if(slot.classList.contains('just-dropped')) {
-                    slot.classList.remove('just-dropped');
-                    return;
-                }
+                if(slot.classList.contains('just-dropped')) { slot.classList.remove('just-dropped'); return; }
                 openEventModal(slot);
             });
             
             const rawData = localStorage.getItem(`schedule-${index}-${hour}`);
             if(rawData) { 
                 const data = parseSlotData(rawData, hour);
-                slot.style.backgroundColor = getSubjectColor(data.subject); 
-                slot.style.color = '#333'; 
-                
+                slot.style.backgroundColor = data.color; 
+                slot.style.color = '#1f2937'; 
                 slot.draggable = true;
                 slot.addEventListener('dragstart', handleDragStart);
 
+                // --- CLEANER UI (No Boxes) ---
                 slot.innerHTML = `
-                    <div class="class-entry-animate w-full h-full flex flex-col justify-center items-center" style="animation-delay: ${gridDelayCounter * 0.05}s">
-                        <div class="font-bold truncate pointer-events-none">${data.subject}</div>
-                        <div class="text-[10px] opacity-70 leading-tight pointer-events-none">${data.start}-${data.end}</div>
-                        ${data.location ? `<div class="text-[9px] opacity-60 truncate pointer-events-none">${data.location}</div>` : ''}
+                    <div class="class-entry-animate w-full h-full relative" style="animation-delay: ${gridDelayCounter * 0.05}s">
+                        
+                        ${data.weekType !== 'every' ? 
+                            `<div class="absolute top-1 left-1 text-[8px] font-black uppercase tracking-wider text-gray-500 opacity-60 pointer-events-none select-none">${data.weekType}</div>` 
+                            : ''}
+                        
+                        ${data.location ? 
+                            `<div class="absolute top-1 right-1 text-[9px] font-bold text-gray-500 opacity-70 pointer-events-none select-none">${data.location}</div>` 
+                            : ''}
+
+                        <div class="absolute inset-0 flex flex-col justify-center items-center pointer-events-none px-1">
+                            <div class="font-black text-[11px] leading-tight uppercase tracking-tight text-gray-800 line-clamp-2">${data.subject}</div>
+                            <div class="text-[9px] font-semibold text-gray-500 mt-0.5">${data.start}-${data.end}</div>
+                        </div>
+
+                        ${data.type ? 
+                            `<div class="absolute bottom-1 right-1 text-[8px] font-bold uppercase text-gray-400 tracking-wider opacity-80 pointer-events-none select-none">${data.type}</div>` 
+                            : ''}
                     </div>
                 `;
                 gridDelayCounter++;
@@ -580,21 +639,61 @@ function openEventModal(slot) {
     currentSelectedSlot = slot; 
     const modal = document.getElementById('eventModal'); 
     
+    // Check if Even/Odd Setting is ON
+    const isEvenOddEnabled = localStorage.getItem('isEvenOddEnabled') === 'true';
+    const weekContainer = document.getElementById('weekTypeContainer');
+    if(weekContainer) {
+        if(isEvenOddEnabled) weekContainer.classList.remove('hidden');
+        else weekContainer.classList.add('hidden');
+    }
+
     const hour = parseInt(slot.dataset.hour);
     const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
     
+    // Default Values
+    let data = {
+        subject: "",
+        start: `${hour.toString().padStart(2,'0')}:00`,
+        end: `${(hour+1).toString().padStart(2,'0')}:00`,
+        location: "",
+        type: "",
+        teacher: "",
+        color: "#F3F4F6", // Default Gray
+        weekType: "every"
+    };
+
     if (rawData) {
-        const data = parseSlotData(rawData, hour);
-        document.getElementById('eventInput').value = data.subject;
-        document.getElementById('startTimeInput').value = data.start;
-        document.getElementById('endTimeInput').value = data.end;
-        document.getElementById('locationInput').value = data.location;
-    } else {
-        document.getElementById('eventInput').value = '';
-        document.getElementById('startTimeInput').value = `${hour.toString().padStart(2,'0')}:00`;
-        document.getElementById('endTimeInput').value = `${(hour+1).toString().padStart(2,'0')}:00`;
-        document.getElementById('locationInput').value = '';
+        data = parseSlotData(rawData, hour);
     }
+
+    // Populate Inputs
+    document.getElementById('eventInput').value = data.subject;
+    document.getElementById('startTimeInput').value = data.start;
+    document.getElementById('endTimeInput').value = data.end;
+    document.getElementById('locationInput').value = data.location;
+    document.getElementById('eventTypeInput').value = data.type;
+    document.getElementById('eventTeacherInput').value = data.teacher;
+    document.getElementById('selectedColorInput').value = data.color;
+    document.getElementById('weekTypeInput').value = data.weekType;
+
+    // Reset Visuals (Color Palette)
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.remove('ring-offset-2', 'ring-gray-400', 'scale-110');
+        btn.classList.add('ring-transparent');
+        if(btn.dataset.color === data.color) {
+            btn.classList.remove('ring-transparent');
+            btn.classList.add('ring-offset-2', 'ring-gray-400', 'scale-110');
+        }
+    });
+
+    // Reset Visuals (Week Type)
+    document.querySelectorAll('.week-type-btn').forEach(btn => {
+        if(btn.dataset.val === data.weekType) {
+            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded shadow-sm bg-white dark:bg-gray-600 text-primary transition";
+        } else {
+            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700 transition";
+        }
+    });
 
     modal.classList.remove('hidden'); 
     modal.classList.add('flex'); 
@@ -605,23 +704,29 @@ function closeEventModal() { document.getElementById('eventModal').classList.add
 
 function saveEventFromModal() {
     if (!currentSelectedSlot) return;
-    const text = document.getElementById('eventInput').value.trim().toUpperCase();
+    
+    // Get Basic Data
+    const subject = document.getElementById('eventInput').value.trim().toUpperCase();
+    if (subject === "") { deleteEventFromModal(); return; }
+
     const start = document.getElementById('startTimeInput').value;
     const end = document.getElementById('endTimeInput').value;
     const loc = document.getElementById('locationInput').value.trim();
     
-    const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
-    
-    if (text === "") { deleteEventFromModal(); return; }
+    // Get New Data
+    const type = document.getElementById('eventTypeInput').value;
+    const teacher = document.getElementById('eventTeacherInput').value.trim();
+    const color = document.getElementById('selectedColorInput').value;
+    const weekType = document.getElementById('weekTypeInput').value;
 
     const eventData = {
-        subject: text,
-        start: start,
-        end: end,
-        location: loc
+        subject, start, end, location: loc,
+        type, teacher, color, weekType
     };
 
+    const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
     localStorage.setItem(key, JSON.stringify(eventData));
+    
     closeEventModal(); 
     refreshAllViews();
 }
@@ -634,25 +739,14 @@ function deleteEventFromModal() {
     refreshAllViews();
 }
 
-function getSubjectColor(text) {
-    if (!text) return ''; const key = text.trim().toLowerCase(); let colorMap = JSON.parse(localStorage.getItem('subjectColors')) || {};
-    if (colorMap[key]) return colorMap[key]; const hue = Math.floor(Math.random() * 360);
-    const newColor = `hsl(${hue}, 85%, 85%)`; colorMap[key] = newColor; localStorage.setItem('subjectColors', JSON.stringify(colorMap)); return newColor;
-
-}
 /* --------------------------
    ANALYTICS LOGIC
    -------------------------- */
-
-// Unique Namespace for your app (Change 'studentdash_v1_app' to something unique if you want)
 const ANALYTICS_NAMESPACE = 'studentdash_v1_public_tracker'; 
 const ANALYTICS_KEY = 'visits';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Increment Visit Count on Load
     trackVisit();
-
-    // 2. Setup Listener to refresh count when opening Settings > About
     const aboutBtn = document.getElementById('setBtnAbout');
     if (aboutBtn) {
         aboutBtn.addEventListener('click', fetchVisitReport);
@@ -660,14 +754,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function trackVisit() {
-    // Check if we already counted this session to avoid inflating numbers on refresh (Optional)
     if (sessionStorage.getItem('visit_counted')) return;
 
     fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/up`)
         .then(res => res.json())
         .then(data => {
             console.log("Visit tracked:", data.count);
-            sessionStorage.setItem('visit_counted', 'true'); // Mark session as counted
+            sessionStorage.setItem('visit_counted', 'true'); 
             updateAnalyticsUI(data.count);
         })
         .catch(err => console.warn("Analytics Error:", err));
@@ -677,7 +770,7 @@ function fetchVisitReport() {
     const display = document.getElementById('analyticsTotalVisits');
     if (!display) return;
     
-    display.innerText = "..."; // Loading state
+    display.innerText = "..."; 
 
     fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/`)
         .then(res => res.json())
@@ -694,7 +787,6 @@ function fetchVisitReport() {
 function updateAnalyticsUI(count) {
     const display = document.getElementById('analyticsTotalVisits');
     if (display) {
-        // Format number with commas (e.g., 1,234)
         display.innerText = new Intl.NumberFormat().format(count);
     }
 }
