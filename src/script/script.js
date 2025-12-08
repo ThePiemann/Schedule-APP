@@ -115,9 +115,9 @@ function getSubjectColor(subject) {
     // Return existing mapped color
     if (colorMap[key]) return colorMap[key];
     
-    // Generate new consistent color if none exists
+    // Generate new consistent color if none exists (Pastel HSL)
     const hue = Math.floor(Math.random() * 360);
-    const newColor = `hsl(${hue}, 95%, 90%)`; // Pastel HSL
+    const newColor = `hsl(${hue}, 95%, 90%)`; 
     
     colorMap[key] = newColor;
     localStorage.setItem('subjectColors', JSON.stringify(colorMap));
@@ -129,12 +129,14 @@ function parseSlotData(rawData, defaultHour) {
     try {
         if (rawData.startsWith('{')) {
             const data = JSON.parse(rawData);
+            // Default empty fields if missing
             if(!data.type) data.type = "";
             if(!data.teacher) data.teacher = "";
             if(!data.weekType) data.weekType = "every";
             
             // --- COLOR FIX ---
-            // If specific color is missing/default, try to get/generate consistent color for this Subject
+            // If specific color is missing or is the default gray, 
+            // try to get/generate consistent color for this Subject Name
             if(!data.color || data.color === "#F3F4F6") {
                 data.color = getSubjectColor(data.subject);
             }
@@ -143,7 +145,7 @@ function parseSlotData(rawData, defaultHour) {
         }
     } catch(e) {}
     
-    // Fallback for old string data
+    // Fallback for old string-only data
     return {
         subject: rawData,
         start: `${defaultHour.toString().padStart(2,'0')}:00`,
@@ -418,9 +420,11 @@ function openEventModal(slot) {
 }
 
 function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); currentSelectedSlot = null; }
-// Ensure modal save logic uses the color:
+
 function saveEventFromModal() {
     if (!currentSelectedSlot) return;
+    
+    // Get Basic Data
     const subject = document.getElementById('eventInput').value.trim().toUpperCase();
     if (subject === "") { deleteEventFromModal(); return; }
 
@@ -430,7 +434,7 @@ function saveEventFromModal() {
     const type = document.getElementById('eventTypeInput').value;
     const teacher = document.getElementById('eventTeacherInput').value.trim();
     
-    // Save color to map for future defaults
+    // Save color to map so duplicates use this color
     const color = document.getElementById('selectedColorInput').value;
     let colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
     colorMap[subject] = color;
@@ -458,14 +462,177 @@ function deleteEventFromModal() {
     refreshAllViews();
 }
 
-// ... (Rest of Analytics/Utils) ...
+/* --------------------------
+   Todo Logic (Standard)
+   -------------------------- */
+function setFilter(type) {
+    currentFilter = type;
+    const allBtn = document.getElementById('filterAllBtn');
+    const todayBtn = document.getElementById('filterTodayBtn');
+    const upcomingBtn = document.getElementById('filterUpcomingBtn');
+
+    const inactiveClass = "px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors";
+    const activeClass = "px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors";
+
+    allBtn.className = (type === 'all') ? activeClass : inactiveClass;
+    todayBtn.className = (type === 'today') ? activeClass : inactiveClass;
+    upcomingBtn.className = (type === 'upcoming') ? activeClass : inactiveClass;
+
+    loadTodos();
+}
+
+function initiateAddTodo() {
+    const input = document.getElementById('todoInput');
+    const text = input.value.trim();
+    if (!text) return;
+    editingTodoId = null;
+    document.getElementById('todoModalTitle').innerText = "New Task";
+    document.getElementById('todoModalNameInput').value = text;
+    document.getElementById('todoDateInput').value = '';
+    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
+    document.querySelector('.p-btn.med')?.classList.add('selected', 'ring-2', 'ring-primary');
+    const modal = document.getElementById('todoModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function initiateEditTodo(id) {
+    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    const todo = todos.find(t => t.id == id);
+    if(!todo) return;
+    editingTodoId = id;
+    document.getElementById('todoModalTitle').innerText = "Edit Task";
+    document.getElementById('todoModalNameInput').value = todo.text;
+    if(todo.deadlineISO) {
+        const d = new Date(todo.deadlineISO);
+        const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        document.getElementById('todoDateInput').value = localIso;
+    } else {
+        document.getElementById('todoDateInput').value = '';
+    }
+    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
+    const pBtn = document.querySelector(`.p-btn[data-priority="${todo.priority}"]`);
+    if(pBtn) pBtn.classList.add('selected', 'ring-2', 'ring-primary');
+    const modal = document.getElementById('todoModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function finalizeAddTodo() {
+    const nameVal = document.getElementById('todoModalNameInput').value.trim();
+    if (!nameVal) return;
+    const dateVal = document.getElementById('todoDateInput').value;
+    const deadlineObj = dateVal ? new Date(dateVal) : null;
+    let priority = 'med';
+    const selectedP = document.querySelector('.p-btn.selected');
+    if(selectedP) priority = selectedP.dataset.priority;
+    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+
+    if (editingTodoId) {
+        const index = todos.findIndex(t => t.id == editingTodoId);
+        if (index > -1) {
+            todos[index].text = nameVal;
+            todos[index].deadlineISO = deadlineObj ? deadlineObj.toISOString() : "";
+            todos[index].deadlineText = deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline";
+            todos[index].priority = priority;
+        }
+    } else {
+        const todoObj = {
+            id: Date.now(),
+            text: nameVal,
+            deadlineISO: deadlineObj ? deadlineObj.toISOString() : "",
+            deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline",
+            priority: priority
+        };
+        todos.push(todoObj);
+    }
+    saveTodos(todos); renderTodos(todos); closeTodoModal();
+    document.getElementById('todoInput').value = ''; 
+}
+
+function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); document.getElementById('todoModal').classList.remove('flex'); }
+function saveTodos(todos) { localStorage.setItem('advancedTodos', JSON.stringify(todos)); }
+function loadTodos() { renderTodos(JSON.parse(localStorage.getItem('advancedTodos') || '[]')); }
+
+function renderTodos(todos) {
+    const list = document.getElementById('todoList');
+    list.innerHTML = '';
+    let filteredTodos = todos;
+    
+    if (currentFilter === 'today') {
+        const todayStr = new Date().toDateString();
+        filteredTodos = todos.filter(t => {
+            if (!t.deadlineISO) return false;
+            return new Date(t.deadlineISO).toDateString() === todayStr;
+        });
+    } else if (currentFilter === 'upcoming') {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        filteredTodos = todos.filter(t => {
+            if (!t.deadlineISO) return false;
+            const d = new Date(t.deadlineISO);
+            d.setHours(0,0,0,0);
+            return d > today; 
+        });
+    }
+
+    filteredTodos.sort((a,b) => {
+        const pVal = { high: 3, med: 2, low: 1 };
+        const pDiff = pVal[b.priority] - pVal[a.priority];
+        if (pDiff !== 0) return pDiff;
+        const tA = a.deadlineISO ? new Date(a.deadlineISO).getTime() : 9999999999999;
+        const tB = b.deadlineISO ? new Date(b.deadlineISO).getTime() : 9999999999999;
+        return tA - tB;
+    });
+    if (filteredTodos.length === 0) {
+        list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic animate-fade-in">No tasks found.</div>`;
+        return;
+    }
+    filteredTodos.forEach((t, index) => createTodoElement(t, list, index));
+}
+
+function createTodoElement(todoObj, container, index = 0) {
+    const div = document.createElement('div');
+    div.className = "task-item flex items-center gap-4 p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 group cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
+    
+    const delay = Math.min(index * 0.05, 0.5);
+    div.style.animationDelay = `${delay}s`;
+
+    div.dataset.id = todoObj.id; div.dataset.deadlineIso = todoObj.deadlineISO || "";
+
+    let dotColor = 'bg-yellow-500';
+    if(todoObj.priority === 'high') dotColor = 'bg-red-500';
+    if(todoObj.priority === 'low') dotColor = 'bg-green-500';
+
+    div.innerHTML = `
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(todoObj.text)}</p>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                <span>${todoObj.deadlineText}</span>
+                <span class="hidden countdown-timer font-mono text-primary font-bold"></span>
+            </div>
+        </div>
+        <div class="w-3 h-3 rounded-full ${dotColor} shrink-0 ring-2 ring-white dark:ring-gray-700 shadow-sm"></div>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+            <button class="edit-btn text-blue-500 hover:bg-blue-50 p-1.5 rounded-md transition"><span class="material-symbols-outlined text-lg">edit</span></button>
+            <button class="delete-btn text-red-500 hover:bg-red-50 p-1.5 rounded-md transition"><span class="material-symbols-outlined text-lg">delete</span></button>
+        </div>
+    `;
+    div.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); initiateEditTodo(todoObj.id); });
+    div.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); let todos = JSON.parse(localStorage.getItem('advancedTodos')); todos = todos.filter(t => t.id != todoObj.id); saveTodos(todos); renderTodos(todos); });
+    container.appendChild(div);
+}
+
+/* --------------------------
+   Utils
+   -------------------------- */
 function updateCountdowns() {
     const now = new Date();
     document.querySelectorAll('#todoList > div').forEach(div => {
         const iso = div.dataset.deadlineIso;
         const timerSpan = div.querySelector('.countdown-timer');
         if(!iso || !timerSpan) return;
+        
         const diff = new Date(iso) - now;
+        
         if(diff <= 0) {
             timerSpan.innerText = "Overdue"; 
             timerSpan.classList.remove('hidden'); 
@@ -473,6 +640,7 @@ function updateCountdowns() {
         } else {
             timerSpan.classList.remove('hidden');
             timerSpan.classList.remove('text-red-500');
+            
             const oneDay = 86400000; 
             if (diff > oneDay) {
                 const d = Math.floor(diff / oneDay);
@@ -496,6 +664,7 @@ function initWeekCounter() {
     const d = new Date();
     const weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
     isEvenWeek = (weekNum % 2 === 0);
+
     const div = document.getElementById('weekDisplay');
     div.innerText = isEvenWeek ? "Week: EVEN" : "Week: ODD";
     div.className = isEvenWeek ? "text-xs font-bold px-3 py-1 rounded bg-purple-100 text-purple-700" : "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
@@ -506,6 +675,9 @@ function escapeHtml(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
+/* --------------------------
+   CALENDAR LOGIC (Standard + DnD)
+   -------------------------- */
 function toggleCalendarView() {
     const monthView = document.getElementById('monthView');
     const weekView = document.getElementById('weekView');
@@ -586,204 +758,54 @@ function renderMonthCalendar() {
     }
 }
 
-function handleDragStart(e) {
-    this.style.opacity = '0.4';
-    e.dataTransfer.effectAllowed = 'move';
-    const dragData = { day: this.dataset.day, hour: this.dataset.hour };
-    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
-}
-
-function handleDragOver(e) {
-    if (e.preventDefault) e.preventDefault(); 
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-}
-
-function handleDragEnter(e) { this.classList.add('drag-over'); }
-function handleDragLeave(e) { this.classList.remove('drag-over'); }
-
-function handleDrop(e) {
-    e.stopPropagation(); 
-    e.preventDefault();
-    this.classList.remove('drag-over');
-    const sourceDataString = e.dataTransfer.getData('application/json');
-    if(!sourceDataString) return; 
-    const sourcePos = JSON.parse(sourceDataString);
-    const targetDay = this.dataset.day;
-    const targetHour = parseInt(this.dataset.hour);
-    const sourceKey = `schedule-${sourcePos.day}-${sourcePos.hour}`;
-    const targetKey = `schedule-${targetDay}-${targetHour}`;
-    if (sourcePos.day == targetDay && sourcePos.hour == targetHour) {
-        document.querySelector(`.slot[data-day="${sourcePos.day}"][data-hour="${sourcePos.hour}"]`).style.opacity = '1';
-        return;
-    }
-    const sourceRaw = localStorage.getItem(sourceKey);
-    const targetRaw = localStorage.getItem(targetKey);
-    let sourceObj = sourceRaw ? parseSlotData(sourceRaw, parseInt(sourcePos.hour)) : null;
-    if (sourceObj) {
-        sourceObj.start = `${targetHour.toString().padStart(2,'0')}:00`;
-        sourceObj.end = `${(targetHour+1).toString().padStart(2,'0')}:00`;
-    }
-    let targetObj = targetRaw ? parseSlotData(targetRaw, targetHour) : null;
-    if (targetObj) {
-        const sHour = parseInt(sourcePos.hour);
-        targetObj.start = `${sHour.toString().padStart(2,'0')}:00`;
-        targetObj.end = `${(sHour+1).toString().padStart(2,'0')}:00`;
-    }
-    if (sourceObj) localStorage.setItem(targetKey, JSON.stringify(sourceObj));
-    else localStorage.removeItem(targetKey);
-    if (targetObj) localStorage.setItem(sourceKey, JSON.stringify(targetObj));
-    else localStorage.removeItem(sourceKey);
-    this.classList.add('just-dropped'); 
-    refreshAllViews(); 
-}
-
-function openEventModal(slot) { 
-    currentSelectedSlot = slot; 
-    const modal = document.getElementById('eventModal'); 
-    const isEvenOddEnabled = localStorage.getItem('isEvenOddEnabled') === 'true';
-    const weekContainer = document.getElementById('weekTypeContainer');
-    if(weekContainer) {
-        if(isEvenOddEnabled) weekContainer.classList.remove('hidden');
-        else weekContainer.classList.add('hidden');
-    }
-    const hour = parseInt(slot.dataset.hour);
-    const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
-    let data = {
-        subject: "",
-        start: `${hour.toString().padStart(2,'0')}:00`,
-        end: `${(hour+1).toString().padStart(2,'0')}:00`,
-        location: "",
-        type: "",
-        teacher: "",
-        color: "#F3F4F6", 
-        weekType: "every"
-    };
-    if (rawData) {
-        data = parseSlotData(rawData, hour);
-    }
-    document.getElementById('eventInput').value = data.subject;
-    document.getElementById('startTimeInput').value = data.start;
-    document.getElementById('endTimeInput').value = data.end;
-    document.getElementById('locationInput').value = data.location;
-    document.getElementById('eventTypeInput').value = data.type;
-    document.getElementById('eventTeacherInput').value = data.teacher;
-    document.getElementById('selectedColorInput').value = data.color;
-    document.getElementById('weekTypeInput').value = data.weekType;
-    document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.classList.remove('ring-offset-2', 'ring-gray-400', 'scale-110');
-        btn.classList.add('ring-transparent');
-        if(btn.dataset.color === data.color) {
-            btn.classList.remove('ring-transparent');
-            btn.classList.add('ring-offset-2', 'ring-gray-400', 'scale-110');
-        }
-    });
-    document.querySelectorAll('.week-type-btn').forEach(btn => {
-        if(btn.dataset.val === data.weekType) {
-            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded shadow-sm bg-white dark:bg-gray-600 text-primary transition";
-        } else {
-            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700 transition";
-        }
-    });
-    modal.classList.remove('hidden'); 
-    modal.classList.add('flex'); 
-    document.getElementById('eventInput').focus(); 
-}
-
-function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); currentSelectedSlot = null; }
-
-function initiateAddTodo() {
-    const input = document.getElementById('todoInput');
-    const text = input.value.trim();
-    if (!text) return;
-    editingTodoId = null;
-    document.getElementById('todoModalTitle').innerText = "New Task";
-    document.getElementById('todoModalNameInput').value = text;
-    document.getElementById('todoDateInput').value = '';
-    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
-    document.querySelector('.p-btn.med')?.classList.add('selected', 'ring-2', 'ring-primary');
-    const modal = document.getElementById('todoModal');
-    modal.classList.remove('hidden'); modal.classList.add('flex');
-}
-
-function initiateEditTodo(id) {
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
-    const todo = todos.find(t => t.id == id);
-    if(!todo) return;
-    editingTodoId = id;
-    document.getElementById('todoModalTitle').innerText = "Edit Task";
-    document.getElementById('todoModalNameInput').value = todo.text;
-    if(todo.deadlineISO) {
-        const d = new Date(todo.deadlineISO);
-        const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-        document.getElementById('todoDateInput').value = localIso;
-    } else {
-        document.getElementById('todoDateInput').value = '';
-    }
-    document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
-    const pBtn = document.querySelector(`.p-btn[data-priority="${todo.priority}"]`);
-    if(pBtn) pBtn.classList.add('selected', 'ring-2', 'ring-primary');
-    const modal = document.getElementById('todoModal');
-    modal.classList.remove('hidden'); modal.classList.add('flex');
-}
-
-function finalizeAddTodo() {
-    const nameVal = document.getElementById('todoModalNameInput').value.trim();
-    if (!nameVal) return;
-    const dateVal = document.getElementById('todoDateInput').value;
-    const deadlineObj = dateVal ? new Date(dateVal) : null;
-    let priority = 'med';
-    const selectedP = document.querySelector('.p-btn.selected');
-    if(selectedP) priority = selectedP.dataset.priority;
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
-    if (editingTodoId) {
-        const index = todos.findIndex(t => t.id == editingTodoId);
-        if (index > -1) {
-            todos[index].text = nameVal;
-            todos[index].deadlineISO = deadlineObj ? deadlineObj.toISOString() : "";
-            todos[index].deadlineText = deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline";
-            todos[index].priority = priority;
-        }
-    } else {
-        const todoObj = {
-            id: Date.now(),
-            text: nameVal,
-            deadlineISO: deadlineObj ? deadlineObj.toISOString() : "",
-            deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline",
-            priority: priority
-        };
-        todos.push(todoObj);
-    }
-    saveTodos(todos); renderTodos(todos); closeTodoModal();
-    document.getElementById('todoInput').value = ''; 
-}
-
-// Analytics (Keep existing)
+/* --------------------------
+   ANALYTICS LOGIC
+   -------------------------- */
 const ANALYTICS_NAMESPACE = 'studentdash_v1_public_tracker'; 
 const ANALYTICS_KEY = 'visits';
+
 document.addEventListener('DOMContentLoaded', () => {
     trackVisit();
     const aboutBtn = document.getElementById('setBtnAbout');
-    if (aboutBtn) { aboutBtn.addEventListener('click', fetchVisitReport); }
+    if (aboutBtn) {
+        aboutBtn.addEventListener('click', fetchVisitReport);
+    }
 });
+
 function trackVisit() {
     if (sessionStorage.getItem('visit_counted')) return;
+
     fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/up`)
         .then(res => res.json())
-        .then(data => { console.log("Visit tracked:", data.count); sessionStorage.setItem('visit_counted', 'true'); updateAnalyticsUI(data.count); })
+        .then(data => {
+            console.log("Visit tracked:", data.count);
+            sessionStorage.setItem('visit_counted', 'true'); 
+            updateAnalyticsUI(data.count);
+        })
         .catch(err => console.warn("Analytics Error:", err));
 }
+
 function fetchVisitReport() {
     const display = document.getElementById('analyticsTotalVisits');
     if (!display) return;
+    
     display.innerText = "..."; 
+
     fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/`)
         .then(res => res.json())
-        .then(data => { updateAnalyticsUI(data.count); })
-        .catch(err => { console.warn("Analytics Fetch Error:", err); display.innerText = "N/A"; display.classList.add('text-gray-500'); });
-}
-function updateAnalyticsUI(count) {
-    const display = document.getElementById('analyticsTotalVisits');
-    if (display) { display.innerText = new Intl.NumberFormat().format(count); }
+        .then(data => {
+            updateAnalyticsUI(data.count);
+        })
+        .catch(err => {
+            console.warn("Analytics Fetch Error:", err);
+            display.innerText = "N/A";
+            display.classList.add('text-gray-500');
+        });
 }
 
+function updateAnalyticsUI(count) {
+    const display = document.getElementById('analyticsTotalVisits');
+    if (display) {
+        display.innerText = new Intl.NumberFormat().format(count);
+    }
+}
