@@ -224,16 +224,7 @@
                     <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFD1E8" data-color="#FFD1E8"></button>
                     <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFC2C2" data-color="#FFC2C2"></button>
                     <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E0E0E0" data-color="#E0E0E0"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F3F4F6" data-color="#F3F4F6"></button> <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFF0F0" data-color="#FFF0F0"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F0FFF4" data-color="#F0FFF4"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F0F9FF" data-color="#F0F9FF"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFFAF0" data-color="#FFFAF0"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FAE1DD" data-color="#FAE1DD"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E9ECEF" data-color="#E9ECEF"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D8F3DC" data-color="#D8F3DC"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#CAF0F8" data-color="#CAF0F8"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FDE4CF" data-color="#FDE4CF"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FBC3BC" data-color="#FBC3BC"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F3F4F6" data-color="#F3F4F6"></button>
                 </div>
                 <input type="hidden" id="selectedColorInput" value="#F3F4F6">
             </div>
@@ -246,21 +237,58 @@
         </div>
     </div>
 
-    <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in">
+    <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
             <h3 id="todoModalTitle" class="text-lg font-bold mb-4">New Task</h3>
+            
             <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Task Name</label>
-            <input type="text" id="todoModalNameInput" maxlength="25" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 bg-transparent focus:ring-2 focus:ring-primary outline-none">
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Deadline</label>
-            <input type="datetime-local" id="todoDateInput" class="w-full p-2 border rounded mb-4 bg-transparent border-gray-300 dark:border-gray-600">
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Priority</label>
-            <div class="flex gap-2 mb-6">
-                <button class="p-btn high flex-1 py-1 text-xs font-bold border rounded bg-red-100 text-red-700 transition hover:bg-red-200" data-priority="high">High</button>
-                <button class="p-btn med flex-1 py-1 text-xs font-bold border rounded bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200" data-priority="med">Med</button>
-                <button class="p-btn low flex-1 py-1 text-xs font-bold border rounded bg-green-100 text-green-700 transition hover:bg-green-200" data-priority="low">Low</button>
+            <input type="text" id="todoModalNameInput" maxlength="40" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="What needs to be done?">
+            
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Deadline</label>
+                    <input type="datetime-local" id="todoDateInput" class="w-full p-2 border rounded-lg bg-transparent border-gray-300 dark:border-gray-600 text-xs">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Priority</label>
+                    <div class="flex gap-1 h-[34px]">
+                        <button class="p-btn high flex-1 text-[10px] font-bold border rounded bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition" data-priority="high">HI</button>
+                        <button class="p-btn med flex-1 text-[10px] font-bold border rounded bg-yellow-50 text-yellow-600 border-yellow-100 hover:bg-yellow-100 transition" data-priority="med">MD</button>
+                        <button class="p-btn low flex-1 text-[10px] font-bold border rounded bg-green-50 text-green-600 border-green-100 hover:bg-green-100 transition" data-priority="low">LO</button>
+                    </div>
+                </div>
             </div>
-            <button id="saveTodoDetailsBtn" class="w-full py-2 bg-primary text-white font-bold rounded hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Save Task</button>
+
+            <button id="saveTodoDetailsBtn" class="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition active:scale-95">Save Task</button>
             <button id="closeTodoModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><span class="material-symbols-outlined">close</span></button>
+        </div>
+    </div>
+
+    <div id="noteModal" class="fixed inset-0 z-[55] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary">description</span>Task Note</h3>
+            
+            <textarea id="noteInput" rows="6" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none resize-none transition-all" placeholder="Write instructions, details or paste links here..."></textarea>
+            
+            <div class="flex gap-3">
+                <button id="closeNoteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="saveNoteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:opacity-90 shadow-lg shadow-blue-500/30 transition">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in text-center border border-gray-100 dark:border-gray-700">
+            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-2xl">delete</span>
+            </div>
+            <h3 class="text-lg font-bold mb-2">Delete Task?</h3>
+            <p class="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
+            
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30 transition">Delete</button>
+            </div>
         </div>
     </div>
     
@@ -332,8 +360,30 @@
                     <div class="space-y-6">
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div>
-                                <h4 class="font-bold">Even/Odd Week Logic</h4>
-                                <p class="text-xs text-gray-500 mt-1">Enable bi-weekly class scheduling options</p>
+                                <h4 class="font-bold">Show Week Counter</h4>
+                                <p class="text-xs text-gray-500 mt-1">Display "Week: Odd/Even" on dashboard</p>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="settingShowWeekCounter"><span class="slider"></span></label>
+                        </div>
+
+                        <div id="weekParityControl" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 opacity-50 pointer-events-none transition-opacity">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-bold">Current Week Status</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Is this week Odd or Even?</p>
+                                </div>
+                                <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                                    <button id="setWeekOddBtn" class="px-4 py-1 text-xs font-bold rounded-md transition">ODD</button>
+                                    <button id="setWeekEvenBtn" class="px-4 py-1 text-xs font-bold rounded-md transition">EVEN</button>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-400">This manually overrides the calculation to match your school's calendar.</p>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div>
+                                <h4 class="font-bold">Bi-Weekly Class Support</h4>
+                                <p class="text-xs text-gray-500 mt-1">Enable "Even/Odd Only" options in class editor</p>
                             </div>
                             <label class="switch"><input type="checkbox" id="settingEvenOddToggle"><span class="slider"></span></label>
                         </div>
@@ -366,12 +416,12 @@
                         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                             <h4 class="font-bold mb-3">Accent Color</h4>
                             <div class="flex gap-4">
-                                <div class="w-8 h-8 rounded-full bg-blue-500 cursor-pointer ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800 shadow-sm hover:scale-110 transition-transform"></div>
-                                <div class="w-8 h-8 rounded-full bg-purple-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
-                                <div class="w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
-                                <div class="w-8 h-8 rounded-full bg-orange-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-blue-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="blue"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-purple-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="purple"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="green"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-orange-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="orange"></div>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">Currently fixed to Blue (Pro feature)</p>
+                            <p class="text-xs text-gray-500 mt-2">Used for buttons, toggles, and the Week Counter.</p>
                         </div>
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Reduce Motion</h4><p class="text-xs text-gray-500 mt-1">Minimize animations</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
                     </div>
