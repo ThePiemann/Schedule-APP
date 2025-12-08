@@ -21,11 +21,16 @@ function setupPdfListeners() {
 
 function openPdfPreview() {
     const modal = document.getElementById('pdfPreviewModal');
+    const printContainer = document.getElementById('printContainer'); // Select the container
     const printGrid = document.getElementById('printGrid');
     const dateLabel = document.getElementById('printDate');
     
-    // We need 'days', 'startHour', 'endHour' from script.js (Global Scope or redefine)
-    // Redefining for safety in this module
+    // 1. Force Wider Container for better resolution & column width
+    if (printContainer) {
+        printContainer.style.minWidth = "1400px"; // Increased from default
+    }
+
+    // We need 'days', 'startHour', 'endHour' from script.js
     const _days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const _start = 7;
     const _end = 20;
@@ -70,11 +75,12 @@ function openPdfPreview() {
                 const key = data.subject.trim().toLowerCase();
                 if(colorMap[key]) color = colorMap[key];
                 
+                // 2. Updated Styles: Bigger Fonts + Removed Truncate
                 slot.innerHTML = `
-                    <div style="background-color: ${color};" class="print-event-card">
-                        <div class="font-bold text-[9px] uppercase leading-tight">${data.subject}</div>
-                        <div class="text-[8px] mt-0.5 opacity-75">${data.start} - ${data.end}</div>
-                        ${data.location ? `<div class="text-[8px] mt-0.5 opacity-60 truncate">${data.location}</div>` : ''}
+                    <div style="background-color: ${color};" class="print-event-card p-1">
+                        <div class="font-bold text-[12px] uppercase leading-tight tracking-wide">${data.subject}</div>
+                        <div class="text-[10px] mt-1 font-medium opacity-90">${data.start} - ${data.end}</div>
+                        ${data.location ? `<div class="text-[10px] mt-0.5 font-medium opacity-80 break-words leading-tight">${data.location}</div>` : ''}
                     </div>
                 `;
             }
@@ -103,11 +109,14 @@ function generateFinalPdf() {
 
     const clone = originalElement.cloneNode(true);
     const cloneWrapper = document.createElement('div');
+    
+    // 3. Wide Wrapper for High Quality capture
     cloneWrapper.style.position = 'fixed';
     cloneWrapper.style.top = '-10000px'; 
     cloneWrapper.style.left = '-10000px';
     cloneWrapper.style.zIndex = '-1';
-    cloneWrapper.style.width = '1100px'; 
+    cloneWrapper.style.width = '1500px'; // Matched/Larger than min-width above
+    
     cloneWrapper.appendChild(clone);
     document.body.appendChild(cloneWrapper);
 
