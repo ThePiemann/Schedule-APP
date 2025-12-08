@@ -662,12 +662,22 @@ function updateDateTime() {
 
 function initWeekCounter() {
     const d = new Date();
-    const weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    // Calculate week number standard
+    let weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    
+    // FIX: Add offset to align with user's specific academic calendar
+    weekNum += 1; 
+
     isEvenWeek = (weekNum % 2 === 0);
 
     const div = document.getElementById('weekDisplay');
-    div.innerText = isEvenWeek ? "Week: EVEN" : "Week: ODD";
-    div.className = isEvenWeek ? "text-xs font-bold px-3 py-1 rounded bg-purple-100 text-purple-700" : "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
+    if(div) {
+        div.innerText = isEvenWeek ? "Week: EVEN" : "Week: ODD";
+        // Updated colors for better visibility
+        div.className = isEvenWeek 
+            ? "text-xs font-bold px-3 py-1 rounded bg-indigo-100 text-indigo-700 border border-indigo-200" 
+            : "text-xs font-bold px-3 py-1 rounded bg-amber-100 text-amber-700 border border-amber-200";
+    }
 }
 
 function escapeHtml(str) {
