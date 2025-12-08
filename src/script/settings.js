@@ -49,12 +49,8 @@ function initSettings() {
         });
     }
 
-    window.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            settingsModal.classList.add('hidden');
-            settingsModal.classList.remove('flex');
-        }
-    });
+    // REMOVED: The window.onclick listener that closed the modal on outside click
+    // This ensures the modal stays open until the user explicitly clicks the close button.
 
     setupSettingsNavigation();
 }
