@@ -163,17 +163,75 @@
         </div>
     </main>
     
-    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 animate-pop-in">
+    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-5 animate-pop-in flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h3 class="text-lg font-bold mb-4">Edit Class Details</h3>
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject</label>
-            <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math">
+            
+            <div class="flex gap-2 mb-3">
+                <div class="flex-1">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject</label>
+                    <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math">
+                </div>
+                <div class="w-1/3">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Type</label>
+                    <select id="eventTypeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none">
+                        <option value="">-</option>
+                        <option value="Lesson">Lesson</option>
+                        <option value="Exercise">Exercise</option>
+                        <option value="Exam">Exam</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Teacher Name</label>
+                <input type="text" id="eventTeacherInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Mr. Anderson">
+            </div>
+
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label><input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
                 <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label><input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
             </div>
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Location / Room</label>
-            <input type="text" id="locationInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-6 text-sm" placeholder="e.g. Science Bldg, Room 302">
+
+            <div class="mb-3">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Location / Room</label>
+                <input type="text" id="locationInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm" placeholder="e.g. Room 302">
+            </div>
+
+            <div id="weekTypeContainer" class="mb-3 hidden">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Frequency</label>
+                <div class="flex bg-gray-100 dark:bg-gray-800 rounded p-1">
+                    <button type="button" class="week-type-btn flex-1 py-1 text-xs font-bold rounded shadow-sm bg-white dark:bg-gray-600 text-primary" data-val="every">Every</button>
+                    <button type="button" class="week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700" data-val="even">Even</button>
+                    <button type="button" class="week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700" data-val="odd">Odd</button>
+                </div>
+                <input type="hidden" id="weekTypeInput" value="every">
+            </div>
+
+            <div class="mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Card Color</label>
+                <div class="flex flex-wrap gap-2" id="colorPalette">
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFD1D1" data-color="#FFD1D1"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFE4C0" data-color="#FFE4C0"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFF5C2" data-color="#FFF5C2"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E4F9C2" data-color="#E4F9C2"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1F5D1" data-color="#D1F5D1"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#C2F9EB" data-color="#C2F9EB"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1E8FF" data-color="#D1E8FF"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#C2D4F9" data-color="#C2D4F9"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E8D1FF" data-color="#E8D1FF"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F9C2F3" data-color="#F9C2F3"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFD1E8" data-color="#FFD1E8"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFC2C2" data-color="#FFC2C2"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E0E0E0" data-color="#E0E0E0"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F3F4F6" data-color="#F3F4F6"></button> <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFF0F0" data-color="#FFF0F0"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F0FFF4" data-color="#F0FFF4"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F0F9FF" data-color="#F0F9FF"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFFAF0" data-color="#FFFAF0"></button>
+                </div>
+                <input type="hidden" id="selectedColorInput" value="#F3F4F6">
+            </div>
+
             <div class="flex gap-3">
                 <button id="deleteEventBtn" class="flex-1 px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm hover:bg-red-200 transition">Clear</button>
                 <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Save</button>
@@ -208,6 +266,7 @@
                 <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
                 <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
                     <button id="setBtnAccount" class="settings-nav-item active"><span class="material-symbols-outlined icon">person</span>Account</button>
+                    <button id="setBtnSchedule" class="settings-nav-item"><span class="material-symbols-outlined icon">calendar_month</span>Schedule</button>
                     <button id="setBtnNotifications" class="settings-nav-item"><span class="material-symbols-outlined icon">notifications</span>Notifications</button>
                     <button id="setBtnTheme" class="settings-nav-item"><span class="material-symbols-outlined icon">palette</span>Theme</button>
                     <button id="setBtnAbout" class="settings-nav-item"><span class="material-symbols-outlined icon">info</span>About</button>
@@ -262,6 +321,19 @@
                     </div>
                 </div>
 
+                <div id="setSectionSchedule" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Schedule Settings</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div>
+                                <h4 class="font-bold">Even/Odd Week Logic</h4>
+                                <p class="text-xs text-gray-500 mt-1">Enable bi-weekly class scheduling options</p>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="settingEvenOddToggle"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="setSectionNotifications" class="settings-section hidden">
                     <h3 class="text-2xl font-bold mb-6">Notifications</h3>
                     <div class="space-y-4">
@@ -305,6 +377,21 @@
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
                         <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.5 (End of Life)</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
                     </div>
+                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-6 rounded-xl shadow-lg mb-6 relative overflow-hidden group">
+                        <div class="relative z-10 flex justify-between items-center">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Website Visits</p>
+                                <h4 id="analyticsTotalVisits" class="text-4xl font-black text-white tracking-tight">Loading...</h4>
+                                <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live Tracking
+                                </p>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-full backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-3xl text-primary">bar_chart</span>
+                            </div>
+                        </div>
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition duration-500"></div>
+                    </div>
                     <div class="space-y-2">
                         <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Terms of Service</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
                         <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Privacy Policy</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
@@ -315,22 +402,6 @@
                         <p class="text-sm text-gray-600 dark:text-gray-300">Created by <span class="font-bold text-primary">A Broke College Student</span></p>
                         <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 text-[10px] text-gray-400"><span>Tailwind CSS</span> • <span>html2canvas</span> • <span>jsPDF</span> • <span>Cropper.js</span> • <span>Open-Meteo</span></div>
                     </div>
-                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-6 rounded-xl shadow-lg mb-6 relative overflow-hidden group">
-                    <div class="relative z-10 flex justify-between items-center">
-                        <div>
-                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Website Visits</p>
-                            <h4 id="analyticsTotalVisits" class="text-4xl font-black text-white tracking-tight">Loading...</h4>
-                            <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live Tracking
-                            </p>
-                        </div>
-                        <div class="bg-white/10 p-3 rounded-full backdrop-blur-sm">
-                            <span class="material-symbols-outlined text-3xl text-primary">bar_chart</span>
-                        </div>
-                    </div>
-                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition duration-500"></div>
-                </div>
-                <div class="space-y-2">
                     <div class="mt-8 text-center"><button class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Check for Updates</button><p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p></div>
                 </div>
             </main>
@@ -410,5 +481,3 @@
 </body>
 
 </html>
-
-
