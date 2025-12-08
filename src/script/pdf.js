@@ -1,416 +1,199 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>StudentDash</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4A90E2">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+/* --------------------------
+   PDF GENERATION LOGIC
+   -------------------------- */
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="StudentDash">
-    <link rel="apple-touch-icon" href="/src/images/studentDash-192.png">
+// Global access to PDF lib
+window.jsPDF = window.jspdf.jsPDF;
 
-    <link rel="icon" type="image/png" sizes="512x512" href="/src/images/studentDash.png">
-
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+function setupPdfListeners() {
+    const downloadBtn = document.getElementById('downloadScheduleBtn');
+    if(downloadBtn) downloadBtn.addEventListener('click', openPdfPreview);
     
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "primary": "#4A90E2",
-              "bg-light": "#F8F9FA",
-              "bg-dark": "#111518",
-              "card-light": "#FFFFFF",
-              "card-dark": "#1C2227",
-            },
-            fontFamily: { "display": ["Inter", "sans-serif"] },
-          },
-        },
-      }
-    </script>
-    <link rel="stylesheet" href="/src/style/style.css">
-</head>
-<body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
+    const closeBtn = document.getElementById('closePdfModal');
+    if(closeBtn) closeBtn.addEventListener('click', closePdfPreview);
 
-    <header class="shrink-0 flex items-center justify-between px-6 py-4 bg-card-light dark:bg-card-dark border-b border-gray-200 dark:border-gray-700 z-20">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/30 transform hover:rotate-12 transition duration-300">
-                <span class="material-symbols-outlined">school</span>
-            </div>
-            <h1 class="text-xl font-bold tracking-tight">StudentDash</h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
+    const cancelBtn = document.getElementById('cancelPdfBtn');
+    if(cancelBtn) cancelBtn.addEventListener('click', closePdfPreview);
+
+    const confirmBtn = document.getElementById('confirmDownloadPdf');
+    if(confirmBtn) confirmBtn.addEventListener('click', generateFinalPdf);
+
+    // Listener for the new toggle
+    const trimToggle = document.getElementById('pdfTrimToggle');
+    if(trimToggle) {
+        trimToggle.addEventListener('change', renderPdfGrid);
+    }
+}
+
+function openPdfPreview() {
+    const modal = document.getElementById('pdfPreviewModal');
+    const printContainer = document.getElementById('printContainer');
+    
+    // Set container width
+    if (printContainer) printContainer.style.minWidth = "1400px";
+
+    // Reset toggle to "Unchecked" (Smart Crop) by default every time you open it
+    // Or set to 'true' if you want "Full Day" by default.
+    const trimToggle = document.getElementById('pdfTrimToggle');
+    if(trimToggle) trimToggle.checked = false; 
+
+    renderPdfGrid();
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function renderPdfGrid() {
+    const printGrid = document.getElementById('printGrid');
+    const dateLabel = document.getElementById('printDate');
+    const trimToggle = document.getElementById('pdfTrimToggle');
+    
+    // Default Range
+    let startH = 7;
+    let endH = 20;
+
+    // --- SMART CROP LOGIC ---
+    // If toggle is NOT checked (Disabled), we calculate the actual range
+    if (trimToggle && !trimToggle.checked) {
+        let foundMin = 20;
+        let foundMax = 7;
+        let hasData = false;
+
+        // Scan all days (0-6) and hours (7-20)
+        for (let h = 7; h <= 20; h++) {
+            for (let d = 0; d < 7; d++) {
+                if (localStorage.getItem(`schedule-${d}-${h}`)) {
+                    hasData = true;
+                    if (h < foundMin) foundMin = h;
+                    if (h > foundMax) foundMax = h;
+                }
+            }
+        }
+
+        if (hasData) {
+            startH = foundMin;
+            endH = foundMax; 
+            // Optional: Add 1 hour buffer at bottom if desired, 
+            // but user asked to cut exactly to the slot.
+        }
+    }
+    // ------------------------
+
+    const _days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    
+    dateLabel.innerText = "Generated on " + new Date().toLocaleDateString();
+    printGrid.innerHTML = '';
+
+    // 1. Render Header
+    const headerRow = document.createElement('div');
+    headerRow.className = 'print-header-row';
+    headerRow.innerHTML = `<div class="p-3 text-center flex items-center justify-center">Time</div>`; 
+    _days.forEach(d => {
+        headerRow.innerHTML += `<div class="p-3 text-center border-l border-gray-700 flex items-center justify-center">${d}</div>`;
+    });
+    printGrid.appendChild(headerRow);
+
+    // 2. Render Rows (based on calculated startH and endH)
+    for (let h = startH; h <= endH; h++) {
+        const row = document.createElement('div');
+        row.className = 'print-row';
+        
+        const timeCol = document.createElement('div');
+        timeCol.className = 'print-time-col';
+        timeCol.innerText = `${h}:00`;
+        row.appendChild(timeCol);
+
+        for (let d = 0; d < 7; d++) {
+            const slot = document.createElement('div');
+            slot.className = 'print-slot-col';
             
-            <button id="settingsBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors" title="Settings">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
-        </div>
-    </header>
+            const rawData = localStorage.getItem(`schedule-${d}-${h}`);
+            if (rawData) {
+                let data = null;
+                try { data = JSON.parse(rawData); } catch(e) { 
+                    data = { subject: rawData, start: `${h}:00`, end: `${h+1}:00` }; 
+                }
 
-    <main class="flex-1 flex overflow-hidden">
-        <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
-            
-            <div class="flex justify-between items-end animate-fade-in">
-                <h2 class="text-3xl font-black tracking-tight">Dashboard</h2>
-                <div id="weekDisplay" class="text-sm font-bold px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">Week Status</div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-10">
+                let color = '#e5e7eb';
+                const colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
+                const key = data.subject.trim().toLowerCase();
+                if(colorMap[key]) color = colorMap[key];
                 
-                <div class="lg:col-span-5 flex flex-col gap-6 animate-slide-up delay-100">
-                    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300">
-                        <h3 class="text-xl font-bold mb-4">My Tasks</h3>
-                        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-1 mb-4 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-                            <input type="text" id="todoInput" maxlength="25" class="w-full bg-transparent border-none focus:ring-0 p-3 text-sm" placeholder="Add task (max 25 chars)...">
-                            <div class="flex justify-between items-center px-3 pb-2 pt-1 border-t border-gray-200 dark:border-gray-700 mt-1">
-                                <span class="text-xs text-gray-400">Press Enter</span>
-                                <button id="addTodoBtn" class="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-md hover:bg-blue-600 transition shadow-sm shadow-primary/30 active:scale-95">Add</button>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-2 mb-4">
-                            <button id="filterAllBtn" class="px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors">All</button>
-                            <button id="filterTodayBtn" class="px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors">Today</button>
-                            <button id="filterUpcomingBtn" class="px-4 py-1 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors">Upcoming</button>
-                        </div>
-
-                        <div id="todoList" class="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar min-h-[300px] p-1"></div>
+                // Styles: Added 'mt-1.5' to location for spacing
+                slot.innerHTML = `
+                    <div style="background-color: ${color};" class="print-event-card p-1.5 flex flex-col justify-center h-full">
+                        <div class="font-black text-[12px] uppercase leading-tight tracking-wide text-gray-800">${data.subject}</div>
+                        <div class="text-[10px] mt-1 font-bold text-gray-600">${data.start} - ${data.end}</div>
+                        ${data.location ? `<div class="text-[10px] mt-1.5 font-bold text-gray-700 break-words leading-tight inline-block mx-auto opacity-80">${data.location}</div>` : ''}
                     </div>
-                </div>
+                `;
+            }
+            row.appendChild(slot);
+        }
+        printGrid.appendChild(row);
+    }
+}
 
-                <div class="lg:col-span-7 flex flex-col gap-6 animate-slide-up delay-200">
-                    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden relative hover:shadow-md transition-shadow duration-300">
-                        
-                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-card-light dark:bg-card-dark z-10">
-                            <div class="flex items-center gap-3">
-                                <h3 id="calendarTitle" class="text-lg font-bold">Class Schedule</h3>
-                                <div id="monthNav" class="flex gap-1 items-center">
-                                    <button id="prevMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full active:scale-90 transition"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-                                    <span id="currentMonthLabel" class="text-xs font-bold w-16 text-center">Oct 2023</span>
-                                    <button id="nextMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full active:scale-90 transition"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button id="downloadScheduleBtn" class="hidden items-center gap-1 px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-95" title="Download PDF">
-                                    <span class="material-symbols-outlined text-sm">download</span>
-                                </button>
-                                <button id="toggleViewBtn" class="flex items-center gap-1 px-3 py-1 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition active:scale-95">
-                                    <span class="material-symbols-outlined text-sm">edit_calendar</span>
-                                    <span id="toggleBtnText">Edit</span>
-                                </button>
-                            </div>
-                        </div>
+function closePdfPreview() {
+    const modal = document.getElementById('pdfPreviewModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
 
-                        <div id="monthView" class="p-4 transition-all duration-300">
-                            <div class="grid grid-cols-7 mb-2 text-center">
-                                <div class="text-[10px] font-bold text-gray-400">S</div>
-                                <div class="text-[10px] font-bold text-gray-400">M</div>
-                                <div class="text-[10px] font-bold text-gray-400">T</div>
-                                <div class="text-[10px] font-bold text-gray-400">W</div>
-                                <div class="text-[10px] font-bold text-gray-400">T</div>
-                                <div class="text-[10px] font-bold text-gray-400">F</div>
-                                <div class="text-[10px] font-bold text-gray-400">S</div>
-                            </div>
-                            <div id="monthGrid" class="grid grid-cols-7 gap-y-1 gap-x-0"></div>
-                            
-                            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                <p id="overviewDateLabel" class="text-xs font-bold mb-2">Today's Schedule</p>
-                                <div id="dailyOverview" class="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar"></div>
-                            </div>
+function generateFinalPdf() {
+    const originalElement = document.getElementById('printContainer');
+    const btn = document.getElementById('confirmDownloadPdf');
+    const originalText = btn.innerHTML;
 
-                            <div id="weatherContainer" class="hidden mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 animate-slide-up delay-300">
-                                <div class="weather-card text-white rounded-xl p-4 flex items-center justify-between shadow-sm">
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <h4 id="weatherCity" class="font-bold text-sm">Loading...</h4>
-                                            <span class="material-symbols-outlined text-xs">location_on</span>
-                                        </div>
-                                        <div class="mt-1">
-                                            <span id="weatherTemp" class="text-3xl font-black">--°</span>
-                                            <span id="weatherDesc" class="text-xs font-medium opacity-90 block">...</span>
-                                        </div>
-                                    </div>
-                                    <span id="weatherIcon" class="material-symbols-outlined text-5xl opacity-90">cloud</span>
-                                </div>
-                            </div>
-                        </div>
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-lg">progress_activity</span> Generating...`;
+    btn.disabled = true;
 
-                        <div id="weekView" class="hidden h-[500px] flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-                            <div class="calendar-wrapper h-full overflow-auto">
-                                <div class="calendar-grid" id="calendarGrid"></div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+    const clone = originalElement.cloneNode(true);
+    const cloneWrapper = document.createElement('div');
     
-    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 animate-pop-in">
-            <h3 class="text-lg font-bold mb-4">Edit Class Details</h3>
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject</label>
-            <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math">
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label><input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
-                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label><input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
-            </div>
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Location / Room</label>
-            <input type="text" id="locationInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 mb-6 text-sm" placeholder="e.g. Science Bldg, Room 302">
-            <div class="flex gap-3">
-                <button id="deleteEventBtn" class="flex-1 px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm hover:bg-red-200 transition">Clear</button>
-                <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Save</button>
-            </div>
-            <button id="closeEventModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><span class="material-symbols-outlined">close</span></button>
-        </div>
-    </div>
-
-    <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in">
-            <h3 id="todoModalTitle" class="text-lg font-bold mb-4">New Task</h3>
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Task Name</label>
-            <input type="text" id="todoModalNameInput" maxlength="25" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 bg-transparent focus:ring-2 focus:ring-primary outline-none">
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Deadline</label>
-            <input type="datetime-local" id="todoDateInput" class="w-full p-2 border rounded mb-4 bg-transparent border-gray-300 dark:border-gray-600">
-            <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Priority</label>
-            <div class="flex gap-2 mb-6">
-                <button class="p-btn high flex-1 py-1 text-xs font-bold border rounded bg-red-100 text-red-700 transition hover:bg-red-200" data-priority="high">High</button>
-                <button class="p-btn med flex-1 py-1 text-xs font-bold border rounded bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200" data-priority="med">Med</button>
-                <button class="p-btn low flex-1 py-1 text-xs font-bold border rounded bg-green-100 text-green-700 transition hover:bg-green-200" data-priority="low">Low</button>
-            </div>
-            <button id="saveTodoDetailsBtn" class="w-full py-2 bg-primary text-white font-bold rounded hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Save Task</button>
-            <button id="closeTodoModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><span class="material-symbols-outlined">close</span></button>
-        </div>
-    </div>
+    cloneWrapper.style.position = 'fixed';
+    cloneWrapper.style.top = '-10000px'; 
+    cloneWrapper.style.left = '-10000px';
+    cloneWrapper.style.zIndex = '-1';
+    cloneWrapper.style.width = '1500px'; 
     
-    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
-        <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative animate-pop-in">
-            <button id="closeSettingsModal" class="absolute top-4 right-4 z-20 p-1 bg-white/50 dark:bg-black/20 rounded-full md:bg-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"><span class="material-symbols-outlined">close</span></button>
-            
-            <aside class="w-full md:w-64 bg-gray-50 dark:bg-gray-900/50 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col shrink-0 z-10">
-                <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
-                <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
-                    <button id="setBtnAccount" class="settings-nav-item active"><span class="material-symbols-outlined icon">person</span>Account</button>
-                    <button id="setBtnNotifications" class="settings-nav-item"><span class="material-symbols-outlined icon">notifications</span>Notifications</button>
-                    <button id="setBtnTheme" class="settings-nav-item"><span class="material-symbols-outlined icon">palette</span>Theme</button>
-                    <button id="setBtnAbout" class="settings-nav-item"><span class="material-symbols-outlined icon">info</span>About</button>
-                </nav>
-            </aside>
+    cloneWrapper.appendChild(clone);
+    document.body.appendChild(cloneWrapper);
 
-            <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative bg-card-light dark:bg-card-dark">
-                <div class="md:hidden h-6"></div> 
-                
-                <div id="setSectionAccount" class="settings-section">
-                    <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
-                    <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-                        <div id="profileImageContainer" class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 shrink-0 overflow-hidden relative shadow-inner">
-                            <span id="defaultProfileIcon" class="material-symbols-outlined text-4xl">person</span>
-                            <img id="currentProfileImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
-                        </div>
-                        <div class="flex flex-wrap gap-3">
-                            <input type="file" id="uploadProfileInput" hidden accept="image/*">
-                            <button id="uploadProfileBtn" class="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-blue-600 transition shadow-sm shadow-primary/30">Upload New</button>
-                            <button id="removeProfileBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-red-500 font-bold text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">Remove</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="Student" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="User" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
-                    </div>
-                    <div class="mb-10"><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label><input type="email" readonly value="student.user@example.com" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed"></div>
-                    <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <h4 class="text-lg font-bold mb-4">Password & Security</h4>
-                        <div class="space-y-4">
-                            <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Current Password</label><input type="password" readonly placeholder="••••••••" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">New Password</label><input type="password" readonly placeholder="New Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                                <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Confirm Password</label><input type="password" readonly placeholder="Confirm Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                            </div>
-                            <div class="flex justify-end mt-2"><button class="px-5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-lg hover:opacity-90 transition shadow-sm">Update Password</button></div>
-                        </div>
-                    </div>
+    html2canvas(clone, {
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+    }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('l', 'mm', 'a4'); 
+        
+        const pageWidth = pdf.internal.pageSize.getWidth();   
+        const pageHeight = pdf.internal.pageSize.getHeight(); 
+        const imgProps = pdf.getImageProperties(imgData);
+        
+        let finalPdfWidth = pageWidth;
+        let finalPdfHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-                    <div class="pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
-                        <h4 class="text-lg font-bold mb-4">Data Management</h4>
-                        <div class="flex gap-4">
-                            <button id="exportDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">download</span> Export Data
-                            </button>
-                            <button id="importDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">upload</span> Import Data
-                            </button>
-                            <input type="file" id="importDataInput" hidden accept=".json">
-                        </div>
-                        <p class="text-xs text-gray-400 mt-3">Export your data to a JSON file to transfer between devices.</p>
-                    </div>
-                </div>
+        if (finalPdfHeight > pageHeight) {
+            const scaleFactor = pageHeight / finalPdfHeight;
+            finalPdfWidth = pageWidth * scaleFactor;
+            finalPdfHeight = pageHeight;
+        }
 
-                <div id="setSectionNotifications" class="settings-section hidden">
-                    <h3 class="text-2xl font-bold mb-6">Notifications</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Push Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Email Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive summaries via email</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <h4 class="font-bold mb-3">Alert Types</h4>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Task Deadlines</span></label>
-                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Class Reminders (15m before)</span></label>
-                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Daily Summary</span></label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        const xPos = (pageWidth - finalPdfWidth) / 2;
+        pdf.addImage(imgData, 'PNG', xPos, 0, finalPdfWidth, finalPdfHeight);
+        pdf.save('StudentDash_Schedule.pdf');
 
-                <div id="setSectionTheme" class="settings-section hidden">
-                    <h3 class="text-2xl font-bold mb-6">Theme & Appearance</h3>
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold mb-1">Dark Mode</h4></div><label class="switch"><input type="checkbox" id="settingThemeToggle"><span class="slider"></span></label></div>
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Vibrant Mode</h4><p class="text-xs text-gray-500 mt-1">Enable gradients & glass effects in Dark Mode</p></div><label class="switch"><input type="checkbox" id="settingVibrantToggle"><span class="slider"></span></label></div>
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Show Weather Widget</h4><p class="text-xs text-gray-500 mt-1">Display local weather in sidebar</p></div><label class="switch"><input type="checkbox" id="settingWeatherToggle"><span class="slider"></span></label></div>
-                        
-                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <h4 class="font-bold mb-3">Accent Color</h4>
-                            <div class="flex gap-4">
-                                <div class="w-8 h-8 rounded-full bg-blue-500 cursor-pointer ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800 shadow-sm hover:scale-110 transition-transform"></div>
-                                <div class="w-8 h-8 rounded-full bg-purple-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
-                                <div class="w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
-                                <div class="w-8 h-8 rounded-full bg-orange-500 cursor-pointer hover:opacity-80 transition hover:scale-110"></div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">Currently fixed to Blue (Pro feature)</p>
-                        </div>
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Reduce Motion</h4><p class="text-xs text-gray-500 mt-1">Minimize animations</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-                    </div>
-                </div>
-
-                <div id="setSectionAbout" class="settings-section hidden">
-                    <h3 class="text-2xl font-bold mb-6">About</h3>
-                    <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
-                        <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.5 (End of Life)</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
-                    </div>
-                    <div class="space-y-2">
-                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Terms of Service</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
-                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Privacy Policy</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
-                        <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Third-Party Licenses</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
-                    </div>
-                    <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h4 class="font-bold text-sm mb-2">Credits</h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">Created by <span class="font-bold text-primary">A Broke College Student</span></p>
-                        <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 text-[10px] text-gray-400"><span>Tailwind CSS</span> • <span>html2canvas</span> • <span>jsPDF</span> • <span>Cropper.js</span> • <span>Open-Meteo</span></div>
-                    </div>
-                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-6 rounded-xl shadow-lg mb-6 relative overflow-hidden group">
-                    <div class="relative z-10 flex justify-between items-center">
-                        <div>
-                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Website Visits</p>
-                            <h4 id="analyticsTotalVisits" class="text-4xl font-black text-white tracking-tight">Loading...</h4>
-                            <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live Tracking
-                            </p>
-                        </div>
-                        <div class="bg-white/10 p-3 rounded-full backdrop-blur-sm">
-                            <span class="material-symbols-outlined text-3xl text-primary">bar_chart</span>
-                        </div>
-                    </div>
-                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition duration-500"></div>
-                </div>
-                <div class="space-y-2">
-                    <div class="mt-8 text-center"><button class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Check for Updates</button><p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p></div>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <div id="pdfPreviewModal" class="fixed inset-0 z-[70] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
-        <div class="bg-white dark:bg-card-dark w-full h-full md:h-[90vh] md:max-w-5xl md:rounded-xl shadow-2xl flex flex-col animate-pop-in overflow-hidden">
-            
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 justify-between items-center bg-gray-50 dark:bg-gray-800 shrink-0">
-                <h3 class="text-lg font-bold mr-2">Schedule Preview</h3>
-                
-                <div class="flex items-center gap-3 mr-auto bg-white dark:bg-gray-700 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600">
-                    <label class="switch scale-75 md:scale-90">
-                        <input type="checkbox" id="pdfTrimToggle"> 
-                        <span class="slider"></span>
-                    </label>
-                    <span class="text-xs md:text-sm font-bold text-gray-600 dark:text-gray-300 whitespace-nowrap">Full Day</span>
-                </div>
-
-                <button id="closePdfModal" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition"><span class="material-symbols-outlined">close</span></button>
-            </div>
-
-            <div class="flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-900 custom-scrollbar text-center relative">
-                <div class="inline-block align-top min-h-full">
-                    <div id="printContainer" class="bg-white text-gray-900 text-left shadow-lg p-8 rounded-lg origin-top-left">
-                        <div class="text-center mb-6">
-                            <h1 class="text-2xl font-black text-primary uppercase tracking-wide">Weekly Schedule</h1>
-                            <p id="printDate" class="text-gray-500 text-sm font-medium mt-1">Generated on ...</p>
-                        </div>
-                        <div id="printGrid" class="border border-gray-300 w-full"></div>
-                        <div class="mt-6 flex justify-between items-center text-xs text-gray-400 border-t pt-4"><span>StudentDash</span><span>Created on https://schedule.zapto.org/</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-white dark:bg-card-dark shrink-0 pb-safe">
-                <button id="cancelPdfBtn" class="px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="confirmDownloadPdf" class="px-6 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">download</span>
-                    <span>Save as PDF</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cropModal" class="fixed inset-0 z-[80] hidden bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-pop-in">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="font-bold">Crop Profile Picture</h3>
-                <button id="closeCropBtn" class="text-gray-500 hover:text-red-500"><span class="material-symbols-outlined">close</span></button>
-            </div>
-            <div class="flex-1 p-4 bg-gray-900 overflow-hidden flex items-center justify-center relative"><div class="w-full h-[400px]"><img id="cropImageToEdit" src="" class="max-w-full block"></div></div>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-                <button id="cancelCropBtn" class="px-4 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-                <button id="confirmCropBtn" class="px-6 py-2 rounded-lg font-bold bg-primary text-white hover:bg-blue-600">Crop & Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="locationModal" class="fixed inset-0 z-[90] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 text-center animate-pop-in">
-            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-slide-up">
-                <span class="material-symbols-outlined text-2xl">location_off</span>
-            </div>
-            <h3 class="text-lg font-bold mb-2">Location Required</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">To show the weather widget, please allow location access in your browser settings.</p>
-            <div class="flex gap-3">
-                <button id="closeLocationModal" class="flex-1 px-4 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="retryLocationBtn" class="flex-1 px-4 py-2 rounded-lg font-bold bg-primary text-white hover:bg-blue-600 transition shadow-sm">Try Again</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="src/script/weather.js"></script>
-    <script src="src/script/pdf.js"></script>
-    <script src="src/script/settings.js"></script>
-    <script src="src/script/script.js"></script>
-</body>
-
-</html>
-
-
+        document.body.removeChild(cloneWrapper);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        closePdfPreview();
+    }).catch(err => {
+        console.error("PDF Error:", err);
+        alert("Error generating PDF.");
+        if (document.body.contains(cloneWrapper)) document.body.removeChild(cloneWrapper);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
