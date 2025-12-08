@@ -18,7 +18,6 @@ function setupPdfListeners() {
     const confirmBtn = document.getElementById('confirmDownloadPdf');
     if(confirmBtn) confirmBtn.addEventListener('click', generateFinalPdf);
 
-    // Listener for the new toggle
     const trimToggle = document.getElementById('pdfTrimToggle');
     if(trimToggle) {
         trimToggle.addEventListener('change', renderPdfGrid);
@@ -29,11 +28,8 @@ function openPdfPreview() {
     const modal = document.getElementById('pdfPreviewModal');
     const printContainer = document.getElementById('printContainer');
     
-    // Set container width
     if (printContainer) printContainer.style.minWidth = "1400px";
 
-    // Reset toggle to "Unchecked" (Smart Crop) by default every time you open it
-    // Or set to 'true' if you want "Full Day" by default.
     const trimToggle = document.getElementById('pdfTrimToggle');
     if(trimToggle) trimToggle.checked = false; 
 
@@ -44,7 +40,6 @@ function openPdfPreview() {
 }
 
 function renderPdfGrid() {
-    // ... (Keep existing toggle logic) ...
     const printGrid = document.getElementById('printGrid');
     const dateLabel = document.getElementById('printDate');
     const trimToggle = document.getElementById('pdfTrimToggle');
@@ -52,7 +47,6 @@ function renderPdfGrid() {
     let startH = 7;
     let endH = 20;
 
-    // Smart Crop Logic
     if (trimToggle && !trimToggle.checked) {
         let foundMin = 20; let foundMax = 7; let hasData = false;
         for (let h = 7; h <= 20; h++) {
@@ -72,7 +66,6 @@ function renderPdfGrid() {
     dateLabel.innerText = "Generated on " + new Date().toLocaleDateString();
     printGrid.innerHTML = '';
 
-    // Header
     const headerRow = document.createElement('div');
     headerRow.className = 'print-header-row';
     headerRow.innerHTML = `<div class="p-3 text-center flex items-center justify-center">Time</div>`; 
@@ -81,7 +74,6 @@ function renderPdfGrid() {
     });
     printGrid.appendChild(headerRow);
 
-    // Rows
     for (let h = startH; h <= endH; h++) {
         const row = document.createElement('div');
         row.className = 'print-row';
@@ -104,10 +96,12 @@ function renderPdfGrid() {
 
                 let color = '#e5e7eb';
                 const colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
+                // Color fallback logic
                 if (data.color) color = data.color;
                 else {
-                    const key = data.subject.trim().toLowerCase();
+                    const key = data.subject.trim().toUpperCase();
                     if(colorMap[key]) color = colorMap[key];
+                    else color = '#F3F4F6';
                 }
                 
                 if(!data.weekType) data.weekType = "every";
