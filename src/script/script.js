@@ -286,7 +286,138 @@ function initCalendar() {
     }
 }
 
-// ... (Rest of drag/drop, modal, analytics, todo functions remain identical) ...
+/* --- Drag and Drop Handlers --- */
+function handleDragStart(e) {
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+    const dragData = { day: this.dataset.day, hour: this.dataset.hour };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault(); 
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) { this.classList.add('drag-over'); }
+function handleDragLeave(e) { this.classList.remove('drag-over'); }
+
+function handleDrop(e) {
+    e.stopPropagation(); 
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    const sourceDataString = e.dataTransfer.getData('application/json');
+    if(!sourceDataString) return; 
+
+    const sourcePos = JSON.parse(sourceDataString);
+    const targetDay = this.dataset.day;
+    const targetHour = parseInt(this.dataset.hour);
+    
+    const sourceKey = `schedule-${sourcePos.day}-${sourcePos.hour}`;
+    const targetKey = `schedule-${targetDay}-${targetHour}`;
+
+    if (sourcePos.day == targetDay && sourcePos.hour == targetHour) {
+        document.querySelector(`.slot[data-day="${sourcePos.day}"][data-hour="${sourcePos.hour}"]`).style.opacity = '1';
+        return;
+    }
+
+    const sourceRaw = localStorage.getItem(sourceKey);
+    const targetRaw = localStorage.getItem(targetKey);
+
+    let sourceObj = sourceRaw ? parseSlotData(sourceRaw, parseInt(sourcePos.hour)) : null;
+    if (sourceObj) {
+        sourceObj.start = `${targetHour.toString().padStart(2,'0')}:00`;
+        sourceObj.end = `${(targetHour+1).toString().padStart(2,'0')}:00`;
+    }
+
+    let targetObj = targetRaw ? parseSlotData(targetRaw, targetHour) : null;
+    if (targetObj) {
+        const sHour = parseInt(sourcePos.hour);
+        targetObj.start = `${sHour.toString().padStart(2,'0')}:00`;
+        targetObj.end = `${(sHour+1).toString().padStart(2,'0')}:00`;
+    }
+
+    if (sourceObj) localStorage.setItem(targetKey, JSON.stringify(sourceObj));
+    else localStorage.removeItem(targetKey);
+
+    if (targetObj) localStorage.setItem(sourceKey, JSON.stringify(targetObj));
+    else localStorage.removeItem(sourceKey);
+
+    this.classList.add('just-dropped'); 
+    refreshAllViews(); 
+}
+
+/* --------------------------
+   Modal & Event Helpers
+   -------------------------- */
+function openEventModal(slot) { 
+    currentSelectedSlot = slot; 
+    const modal = document.getElementById('eventModal'); 
+    
+    // Check if Even/Odd Setting is ON
+    const isEvenOddEnabled = localStorage.getItem('isEvenOddEnabled') === 'true';
+    const weekContainer = document.getElementById('weekTypeContainer');
+    if(weekContainer) {
+        if(isEvenOddEnabled) weekContainer.classList.remove('hidden');
+        else weekContainer.classList.add('hidden');
+    }
+
+    const hour = parseInt(slot.dataset.hour);
+    const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
+    
+    // Default Values
+    let data = {
+        subject: "",
+        start: `${hour.toString().padStart(2,'0')}:00`,
+        end: `${(hour+1).toString().padStart(2,'0')}:00`,
+        location: "",
+        type: "",
+        teacher: "",
+        color: "#F3F4F6", // Default Gray
+        weekType: "every"
+    };
+
+    if (rawData) {
+        data = parseSlotData(rawData, hour);
+    }
+
+    // Populate Inputs
+    document.getElementById('eventInput').value = data.subject;
+    document.getElementById('startTimeInput').value = data.start;
+    document.getElementById('endTimeInput').value = data.end;
+    document.getElementById('locationInput').value = data.location;
+    document.getElementById('eventTypeInput').value = data.type;
+    document.getElementById('eventTeacherInput').value = data.teacher;
+    document.getElementById('selectedColorInput').value = data.color;
+    document.getElementById('weekTypeInput').value = data.weekType;
+
+    // Reset Visuals (Color Palette)
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.remove('ring-offset-2', 'ring-gray-400', 'scale-110');
+        btn.classList.add('ring-transparent');
+        if(btn.dataset.color === data.color) {
+            btn.classList.remove('ring-transparent');
+            btn.classList.add('ring-offset-2', 'ring-gray-400', 'scale-110');
+        }
+    });
+
+    // Reset Visuals (Week Type)
+    document.querySelectorAll('.week-type-btn').forEach(btn => {
+        if(btn.dataset.val === data.weekType) {
+            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded shadow-sm bg-white dark:bg-gray-600 text-primary transition";
+        } else {
+            btn.className = "week-type-btn flex-1 py-1 text-xs font-bold rounded text-gray-500 hover:text-gray-700 transition";
+        }
+    });
+
+    modal.classList.remove('hidden'); 
+    modal.classList.add('flex'); 
+    document.getElementById('eventInput').focus(); 
+}
+
+function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); currentSelectedSlot = null; }
 // Ensure modal save logic uses the color:
 function saveEventFromModal() {
     if (!currentSelectedSlot) return;
@@ -655,3 +786,4 @@ function updateAnalyticsUI(count) {
     const display = document.getElementById('analyticsTotalVisits');
     if (display) { display.innerText = new Intl.NumberFormat().format(count); }
 }
+
