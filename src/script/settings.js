@@ -3,11 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSettings() {
+    // 1. Load saved preferences immediately
     loadTheme();
+    
+    // 2. Initialize Section Logic
     initAccountSettings();
-    initScheduleSettings(); // NEW: Load schedule settings
+    initScheduleSettings(); 
+    initThemeSettings(); 
 
-    // Toggles
+    // 3. Bind Global Toggles
     const themeToggle = document.getElementById('settingThemeToggle');
     if (themeToggle) themeToggle.addEventListener('change', toggleTheme);
 
@@ -21,7 +25,7 @@ function initSettings() {
         });
     }
 
-    // Modal Logic
+    // 4. Modal Open/Close Logic
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsBtn = document.getElementById('closeSettingsModal');
@@ -38,25 +42,169 @@ function initSettings() {
         closeSettingsBtn.addEventListener('click', () => {
             settingsModal.classList.add('hidden');
             settingsModal.classList.remove('flex');
+            // REMOVED: location.reload();
         });
     }
 
     setupSettingsNavigation();
 }
 
+/* ---------------------------------------------------------
+   THEME LOGIC (Dark Mode, Vibrant, Accent)
+   --------------------------------------------------------- */
+function loadTheme() {
+    const html = document.documentElement;
+    
+    // 1. Dark Mode
+    const isDark = localStorage.getItem('isDarkMode') === 'true';
+    if (isDark) html.classList.add('dark'); else html.classList.remove('dark');
+    const darkToggle = document.getElementById('settingThemeToggle');
+    if (darkToggle) darkToggle.checked = isDark;
+    
+    // 2. Vibrant Mode
+    const isVibrant = localStorage.getItem('isVibrant') === 'true'; 
+    if (isVibrant) html.classList.add('vibrant'); else html.classList.remove('vibrant');
+    const vibrantToggle = document.getElementById('settingVibrantToggle');
+    if (vibrantToggle) vibrantToggle.checked = isVibrant;
+
+    // 3. Accent Theme
+    const accent = localStorage.getItem('appAccent') || 'blue';
+    html.setAttribute('data-theme', accent);
+
+    // 4. Update Accent Buttons
+    const btns = document.querySelectorAll('.theme-btn');
+    btns.forEach(btn => {
+        if(btn.dataset.theme === accent) {
+            btn.classList.add('ring-2', 'ring-gray-400');
+        } else {
+            btn.classList.remove('ring-2', 'ring-gray-400');
+        }
+    });
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('isDarkMode', isDark);
+}
+
+function toggleVibrant() {
+    const html = document.documentElement;
+    const isVibrant = html.classList.toggle('vibrant');
+    localStorage.setItem('isVibrant', isVibrant);
+}
+
+function initThemeSettings() {
+    const btns = document.querySelectorAll('.theme-btn');
+    btns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const newTheme = e.target.dataset.theme;
+            localStorage.setItem('appAccent', newTheme);
+            loadTheme(); // Apply immediately
+            if(typeof updateParityButtons === 'function') updateParityButtons();
+            if(typeof initWeekCounter === 'function') initWeekCounter();
+        });
+    });
+}
+
+/* ---------------------------------------------------------
+   SCHEDULE SETTINGS (Week Counter & Bi-Weekly)
+   --------------------------------------------------------- */
 function initScheduleSettings() {
-    const toggle = document.getElementById('settingEvenOddToggle');
-    const saved = localStorage.getItem('isEvenOddEnabled') === 'true';
-    if(toggle) {
-        toggle.checked = saved;
-        toggle.addEventListener('change', (e) => {
-            localStorage.setItem('isEvenOddEnabled', e.target.checked);
+    // 1. Bi-Weekly Class Support
+    const eoToggle = document.getElementById('settingEvenOddToggle');
+    const savedEO = localStorage.getItem('isEvenOddEnabled') === 'true';
+    if(eoToggle) {
+        eoToggle.checked = savedEO;
+        eoToggle.addEventListener('change', (e) => localStorage.setItem('isEvenOddEnabled', e.target.checked));
+    }
+
+    // 2. Week Counter Visibility
+    const weekToggle = document.getElementById('settingShowWeekCounter');
+    const savedWeek = localStorage.getItem('showWeekCounter') === 'true'; 
+    const parityControl = document.getElementById('weekParityControl');
+    
+    if(weekToggle) {
+        weekToggle.checked = savedWeek;
+        toggleParityControl(savedWeek); 
+
+        weekToggle.addEventListener('change', (e) => {
+            localStorage.setItem('showWeekCounter', e.target.checked);
+            toggleParityControl(e.target.checked);
+            if(typeof initWeekCounter === 'function') initWeekCounter();
+        });
+    }
+
+    function toggleParityControl(enable) {
+        if(parityControl) {
+            if(enable) {
+                parityControl.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                parityControl.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+    }
+
+    // 3. Week Parity Manual Set
+    const btnOdd = document.getElementById('setWeekOddBtn');
+    const btnEven = document.getElementById('setWeekEvenBtn');
+    
+    updateParityButtons();
+
+    if(btnOdd && btnEven) {
+        btnOdd.addEventListener('click', () => {
+            const rawIsEven = calculateRawEven();
+            localStorage.setItem('weekParityInvert', rawIsEven ? 'true' : 'false');
+            updateParityButtons();
+            if(typeof initWeekCounter === 'function') initWeekCounter(); 
+        });
+
+        btnEven.addEventListener('click', () => {
+            const rawIsEven = calculateRawEven();
+            localStorage.setItem('weekParityInvert', !rawIsEven ? 'true' : 'false');
+            updateParityButtons();
+            if(typeof initWeekCounter === 'function') initWeekCounter(); 
         });
     }
 }
 
+function updateParityButtons() {
+    const rawIsEven = calculateRawEven();
+    const invert = localStorage.getItem('weekParityInvert') === 'true';
+    const isActuallyEven = rawIsEven !== invert; 
+
+    const btnOdd = document.getElementById('setWeekOddBtn');
+    const btnEven = document.getElementById('setWeekEvenBtn');
+
+    if(btnOdd && btnEven) {
+        const baseStyle = "px-4 py-1 text-xs font-bold rounded-md transition";
+        const inactiveStyle = `${baseStyle} text-gray-500 hover:text-gray-700 bg-gray-200 dark:bg-gray-700`;
+        
+        btnOdd.style.backgroundColor = ""; btnOdd.style.color = "";
+        btnEven.style.backgroundColor = ""; btnEven.style.color = "";
+
+        if(isActuallyEven) {
+            btnEven.className = `${baseStyle} text-white shadow-sm`;
+            btnEven.style.backgroundColor = "var(--primary)";
+            btnOdd.className = inactiveStyle;
+        } else {
+            btnOdd.className = `${baseStyle} text-white shadow-sm`;
+            btnOdd.style.backgroundColor = "var(--primary)";
+            btnEven.className = inactiveStyle;
+        }
+    }
+}
+
+function calculateRawEven() {
+    const d = new Date();
+    const weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    return (weekNum % 2 === 0);
+}
+
+/* ---------------------------------------------------------
+   NAVIGATION & TABS
+   --------------------------------------------------------- */
 function setupSettingsNavigation() {
-    // Added 'Schedule' to the tabs list
     const tabs = ['Account', 'Schedule', 'Notifications', 'Theme', 'About'];
     tabs.forEach(tab => {
         const btn = document.getElementById(`setBtn${tab}`);
@@ -82,7 +230,6 @@ function switchSettingsTab(activeTabName) {
     });
 }
 
-/* --- Account Settings Logic (Export/Import + Crop) --- */
 function initAccountSettings() {
     const firstNameInput = document.getElementById('firstNameInput');
     const lastNameInput = document.getElementById('lastNameInput');
@@ -92,7 +239,6 @@ function initAccountSettings() {
     const imgElement = document.getElementById('currentProfileImg');
     const iconElement = document.getElementById('defaultProfileIcon');
 
-    // Load saved data
     const savedFirst = localStorage.getItem('userFirstName');
     const savedLast = localStorage.getItem('userLastName');
     const savedImage = localStorage.getItem('userProfileImage');
@@ -109,10 +255,9 @@ function initAccountSettings() {
     if (firstNameInput) firstNameInput.addEventListener('input', (e) => localStorage.setItem('userFirstName', e.target.value));
     if (lastNameInput) lastNameInput.addEventListener('input', (e) => localStorage.setItem('userLastName', e.target.value));
 
-    // Profile Pic Logic
     if (uploadBtn && fileInput) uploadBtn.addEventListener('click', () => fileInput.click());
 
-    // --- CROPPER LOGIC ---
+    // Cropper logic
     const cropModal = document.getElementById('cropModal');
     const cropImg = document.getElementById('cropImageToEdit');
     const confirmCrop = document.getElementById('confirmCropBtn');
@@ -130,42 +275,41 @@ function initAccountSettings() {
                     cropModal.classList.remove('hidden');
                     cropModal.classList.add('flex');
                     if(cropper) cropper.destroy();
-                    cropper = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1, autoCropArea: 1 });
+                    cropper = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1 });
                 };
                 reader.readAsDataURL(file);
             }
             e.target.value = '';
         });
     }
+    
+    function closeCropLogic() {
+        cropModal.classList.add('hidden');
+        cropModal.classList.remove('flex');
+        if(cropper) { cropper.destroy(); cropper = null; }
+    }
 
     if(confirmCrop) {
         confirmCrop.addEventListener('click', () => {
             if(!cropper) return;
             const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
-            const base64 = canvas.toDataURL();
-            localStorage.setItem('userProfileImage', base64);
+            localStorage.setItem('userProfileImage', canvas.toDataURL());
+            
             if(imgElement && iconElement) {
-                imgElement.src = base64;
+                imgElement.src = canvas.toDataURL();
                 imgElement.classList.remove('hidden');
                 iconElement.classList.add('hidden');
             }
-            closeCropModalLogic();
+            closeCropLogic();
         });
     }
-
-    function closeCropModalLogic() {
-         cropModal.classList.add('hidden');
-         cropModal.classList.remove('flex');
-         if(cropper) { cropper.destroy(); cropper = null; }
-    }
-
-    if(cancelCrop) cancelCrop.addEventListener('click', closeCropModalLogic);
-    if(closeCrop) closeCrop.addEventListener('click', closeCropModalLogic);
+    
+    if(cancelCrop) cancelCrop.addEventListener('click', closeCropLogic);
+    if(closeCrop) closeCrop.addEventListener('click', closeCropLogic);
 
     if (removeBtn) {
         removeBtn.addEventListener('click', () => {
             localStorage.removeItem('userProfileImage');
-            if(fileInput) fileInput.value = ""; 
             if(imgElement && iconElement) {
                 imgElement.src = "";
                 imgElement.classList.add('hidden');
@@ -174,105 +318,48 @@ function initAccountSettings() {
         });
     }
 
-    // --- DATA IMPORT / EXPORT LOGIC ---
     const exportBtn = document.getElementById('exportDataBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
             const data = {};
-            const keys = ['userFirstName', 'userLastName', 'userProfileImage', 'isDarkMode', 'isVibrant', 'isWeatherEnabled', 'advancedTodos', 'subjectColors', 'isEvenOddEnabled'];
-            
-            // Fixed keys
-            keys.forEach(k => {
-                const val = localStorage.getItem(k);
-                if(val) data[k] = val;
-            });
-            
-            // Dynamic keys (Schedule)
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key.startsWith('schedule-')) {
-                    data[key] = localStorage.getItem(key);
-                }
+                data[key] = localStorage.getItem(key);
             }
-            
             const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `studentdash_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `studentdash_backup.json`;
             a.click();
         });
     }
-
+    
     const importBtn = document.getElementById('importDataBtn');
     const importInput = document.getElementById('importDataInput');
     
     if (importBtn && importInput) {
         importBtn.addEventListener('click', () => importInput.click());
-        
         importInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if(!file) return;
-            
             const reader = new FileReader();
             reader.onload = (ev) => {
                 try {
                     const data = JSON.parse(ev.target.result);
-                    if(confirm("Importing data will overwrite your current schedule and settings. Continue?")) {
+                    if(confirm("Importing data will overwrite your current settings and schedule. Continue?")) {
                         Object.keys(data).forEach(key => {
                             localStorage.setItem(key, data[key]);
                         });
                         alert('Data imported successfully!');
-                        location.reload();
+                        location.reload(); // Hard reload needed for deep data resets
                     }
                 } catch(err) {
                     alert('Invalid data file.');
                 }
             };
             reader.readAsText(file);
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         });
     }
-}
-
-/* --- Theme Logic --- */
-function loadTheme() {
-    const html = document.documentElement;
-    
-    // Dark Mode
-    const isDark = localStorage.getItem('isDarkMode') === 'true';
-    const darkToggle = document.getElementById('settingThemeToggle');
-    
-    if (isDark) { 
-        html.classList.add('dark'); 
-        if (darkToggle) darkToggle.checked = true; 
-    } else {
-        html.classList.remove('dark'); 
-        if (darkToggle) darkToggle.checked = false; 
-    }
-
-    // Vibrant Mode
-    const savedVibrant = localStorage.getItem('isVibrant');
-    const isVibrant = savedVibrant === null || savedVibrant === 'true';
-    const vibrantToggle = document.getElementById('settingVibrantToggle');
-    
-    if (isVibrant) { 
-        html.classList.add('vibrant'); 
-        if (vibrantToggle) vibrantToggle.checked = true; 
-    } else {
-        html.classList.remove('vibrant'); 
-        if (vibrantToggle) vibrantToggle.checked = false; 
-    }
-}
-
-function toggleTheme() {
-    const html = document.documentElement;
-    const isDark = html.classList.toggle('dark');
-    localStorage.setItem('isDarkMode', isDark);
-}
-
-function toggleVibrant() {
-    const html = document.documentElement;
-    const isVibrant = html.classList.toggle('vibrant');
-    localStorage.setItem('isVibrant', isVibrant);
 }
