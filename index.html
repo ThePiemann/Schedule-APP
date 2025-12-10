@@ -25,7 +25,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-
+    
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7487029408349375"
      crossorigin="anonymous"></script>
     <script>
@@ -180,6 +180,7 @@
                         <option value="">-</option>
                         <option value="Lesson">Lesson</option>
                         <option value="Exercise">Exercise</option>
+                        <option value="Lab">Lab</option>
                         <option value="Exam">Exam</option>
                     </select>
                 </div>
@@ -241,7 +242,14 @@
 
     <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
-            <h3 id="todoModalTitle" class="text-lg font-bold mb-4">New Task</h3>
+            
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="todoModalTitle" class="text-lg font-bold">New Task</h3>
+                <button id="todoModalPinBtn" class="text-gray-400 hover:text-primary transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700" title="Pin Task">
+                    <span class="material-symbols-outlined" id="todoModalPinIcon">keep</span>
+                </button>
+                <input type="hidden" id="todoPinnedInput" value="false">
+            </div>
             
             <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Task Name</label>
             <input type="text" id="todoModalNameInput" maxlength="40" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="What needs to be done?">
@@ -254,15 +262,17 @@
                 <div>
                     <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Priority</label>
                     <div class="flex gap-1 h-[34px]">
-                        <button class="p-btn high flex-1 text-[10px] font-bold border rounded bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition" data-priority="high">HI</button>
-                        <button class="p-btn med flex-1 text-[10px] font-bold border rounded bg-yellow-50 text-yellow-600 border-yellow-100 hover:bg-yellow-100 transition" data-priority="med">MD</button>
-                        <button class="p-btn low flex-1 text-[10px] font-bold border rounded bg-green-50 text-green-600 border-green-100 hover:bg-green-100 transition" data-priority="low">LO</button>
+                        <button class="p-btn high flex-1 text-[10px] font-bold border rounded bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition" data-priority="high">H</button>
+                        <button class="p-btn med flex-1 text-[10px] font-bold border rounded bg-yellow-50 text-yellow-600 border-yellow-100 hover:bg-yellow-100 transition" data-priority="med">M</button>
+                        <button class="p-btn low flex-1 text-[10px] font-bold border rounded bg-green-50 text-green-600 border-green-100 hover:bg-green-100 transition" data-priority="low">L</button>
                     </div>
                 </div>
             </div>
 
-            <button id="saveTodoDetailsBtn" class="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition active:scale-95">Save Task</button>
-            <button id="closeTodoModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><span class="material-symbols-outlined">close</span></button>
+            <div class="flex gap-3">
+                <button id="cancelTodoBtn" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="saveTodoDetailsBtn" class="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition active:scale-95">Save Task</button>
+            </div>
         </div>
     </div>
 
@@ -539,4 +549,3 @@
 </body>
 
 </html>
-
