@@ -1,18 +1,31 @@
-/* --------------------------
-   WEATHER & LOCATION LOGIC
-   -------------------------- */
+/* src/script/weather.js */
 
 document.addEventListener('DOMContentLoaded', () => {
     initWeather();
+    
     const retryBtn = document.getElementById('retryLocationBtn');
     const cancelBtn = document.getElementById('closeLocationModal');
-    if (retryBtn) { retryBtn.addEventListener('click', () => { hideLocationModal(); const toggle = document.getElementById('settingWeatherToggle'); if (toggle) { toggle.checked = true; handleWeatherToggle(true); } }); }
-    if (cancelBtn) { cancelBtn.addEventListener('click', hideLocationModal); }
+    
+    if (retryBtn) { 
+        retryBtn.addEventListener('click', () => { 
+            hideLocationModal(); 
+            const toggle = document.getElementById('settingWeatherToggle'); 
+            if (toggle) { 
+                toggle.checked = true; 
+                handleWeatherToggle(true); 
+            } 
+        }); 
+    }
+    
+    if (cancelBtn) { 
+        cancelBtn.addEventListener('click', hideLocationModal); 
+    }
 });
 
 function initWeather() {
     const isEnabled = localStorage.getItem('isWeatherEnabled') === 'true';
     const toggle = document.getElementById('settingWeatherToggle');
+    
     if (toggle) toggle.checked = isEnabled;
     if (isEnabled) { attemptFetchWeather(false); } else { hideWeatherWidget(); }
 }
@@ -21,12 +34,18 @@ function handleWeatherToggle(isChecked) {
     const toggle = document.getElementById('settingWeatherToggle');
     if (isChecked) {
         if (toggle) toggle.disabled = true;
+        
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     if (toggle) { toggle.disabled = false; toggle.checked = true; }
                     localStorage.setItem('isWeatherEnabled', 'true');
-                    fetchWeather(pos.coords.latitude, pos.coords.longitude);
+                    
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    
+                    fetchWeather(lat, lon);
+                    fetchLocationName(lat, lon); // New Call
                     showWeatherWidget();
                 },
                 (err) => {
@@ -50,15 +69,22 @@ function handleWeatherToggle(isChecked) {
 function attemptFetchWeather() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            (pos) => { showWeatherWidget(); fetchWeather(pos.coords.latitude, pos.coords.longitude); },
-            (err) => { console.log("Weather enabled but permission missing."); hideWeatherWidget(); }
+            (pos) => { 
+                showWeatherWidget(); 
+                fetchWeather(pos.coords.latitude, pos.coords.longitude); 
+                fetchLocationName(pos.coords.latitude, pos.coords.longitude); // New Call
+            },
+            (err) => { 
+                console.log("Weather enabled but permission missing."); 
+                hideWeatherWidget(); 
+            }
         );
     }
 }
 
 function fetchWeather(lat, lon) {
-    // API Call (includes is_day)
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    
     fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -69,17 +95,36 @@ function fetchWeather(lat, lon) {
         .catch(err => console.error("Weather fetch failed", err));
 }
 
+// NEW: Reverse Geocoding to get City/Country
+function fetchLocationName(lat, lon) {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const city = data.city || data.locality || "Local Weather";
+            const country = data.countryName || "";
+            
+            const display = document.getElementById('weatherCity');
+            if(display) {
+                if(country) display.innerText = `${city}, ${country}`;
+                else display.innerText = city;
+            }
+        })
+        .catch(err => console.error("Location lookup failed", err));
+}
+
 function renderWeather(data) {
     const temp = Math.round(data.temperature);
     const code = data.weathercode;
-    const isDay = data.is_day === 1; // 1 = Day, 0 = Night
+    const isDay = data.is_day === 1;
 
     document.getElementById('weatherTemp').innerText = `${temp}°`;
     document.getElementById('weatherDesc').innerText = getWeatherDescription(code);
-    document.getElementById('weatherIcon').innerText = getWeatherIcon(code, isDay); // Pass isDay for icon variation if needed
-    document.getElementById('weatherCity').innerText = "Local Weather";
+    document.getElementById('weatherIcon').innerText = getWeatherIcon(code, isDay);
+    
+    // Note: weatherCity is updated by fetchLocationName now
 
-    // Dynamic Background Update
     updateWeatherTheme(isDay, code);
 }
 
@@ -90,22 +135,18 @@ function updateWeatherTheme(isDay, code) {
     let gradient = '';
 
     if (isDay) {
-        // DAY THEMES
-        if (code >= 95) gradient = 'linear-gradient(135deg, #4b5563 0%, #1f2937 100%)'; // Storm (Dark Gray)
-        else if (code >= 51) gradient = 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)'; // Rain (Blue)
-        else if (code >= 1 && code <= 3) gradient = 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)'; // Cloudy (Light Blue)
-        else gradient = 'linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%)'; // Clear (Sunny/Gold) - Adjusted to be warmer
+        if (code >= 95) gradient = 'linear-gradient(135deg, #4b5563 0%, #1f2937 100%)'; 
+        else if (code >= 51) gradient = 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)'; 
+        else if (code >= 1 && code <= 3) gradient = 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)'; 
+        else gradient = 'linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%)'; 
         
-        // Actually, let's keep the standard "Blue/Purple" brand but adjust brightness
-        if (code === 0) gradient = 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)'; // Bright Clear
+        if (code === 0) gradient = 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)'; 
     } else {
-        // NIGHT THEMES
-        if (code >= 95) gradient = 'linear-gradient(135deg, #1f2937 0%, #000000 100%)'; // Night Storm
-        else if (code >= 51) gradient = 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)'; // Night Rain
-        else gradient = 'linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)'; // Night Clear (Deep Indigo)
+        if (code >= 95) gradient = 'linear-gradient(135deg, #1f2937 0%, #000000 100%)'; 
+        else if (code >= 51) gradient = 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)'; 
+        else gradient = 'linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)'; 
     }
 
-    // Apply
     card.style.background = gradient;
 }
 
@@ -120,8 +161,7 @@ function getWeatherDescription(code) {
 }
 
 function getWeatherIcon(code, isDay = true) {
-    // Optional: Return moon icons if !isDay, but standard google font weather icons are generic
-    if (code === 0) return isDay ? 'sunny' : 'bedtime'; // Sun vs Moon
+    if (code === 0) return isDay ? 'sunny' : 'bedtime'; 
     if (code >= 1 && code <= 3) return isDay ? 'partly_cloudy_day' : 'nights_stay';
     if (code >= 45 && code <= 48) return 'foggy';
     if (code >= 51 && code <= 67) return 'rainy';
