@@ -102,7 +102,9 @@ function setupEventListeners() {
 
     safeAddClick('addTodoBtn', initiateAddTodo);
     document.getElementById('todoInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') initiateAddTodo(); });
-    safeAddClick('closeTodoModal', closeTodoModal);
+    
+    // Updated Cancel Button ID
+    safeAddClick('cancelTodoBtn', closeTodoModal); 
     safeAddClick('saveTodoDetailsBtn', finalizeAddTodo);
     
     document.getElementById('filterAllBtn').addEventListener('click', () => setFilter('all'));
@@ -122,10 +124,11 @@ function setupEventListeners() {
     
     safeAddClick('closeNoteBtn', closeNoteModal);
     safeAddClick('saveNoteBtn', saveNoteFromModal);
-    
-    // Delete Modal
     safeAddClick('cancelDeleteBtn', closeDeleteModal);
     safeAddClick('confirmDeleteBtn', confirmDeleteTodo);
+    
+    // Bind Pin Toggle in Modal
+    safeAddClick('todoModalPinBtn', toggleModalPinState);
 }
 
 function setupModalInputs() {
@@ -397,6 +400,25 @@ function deleteEventFromModal() {
 /* --------------------------
    TODO LOGIC (Mobile Click Fix & Dot Placement)
    -------------------------- */
+function toggleModalPinState() {
+    const input = document.getElementById('todoPinnedInput');
+    const icon = document.getElementById('todoModalPinIcon');
+    const btn = document.getElementById('todoModalPinBtn');
+    
+    const isPinned = input.value === 'true';
+    input.value = !isPinned; 
+    
+    if(!isPinned) {
+        icon.style.fontVariationSettings = "'FILL' 1"; 
+        btn.classList.add('text-primary');
+        btn.classList.remove('text-gray-400');
+    } else {
+        icon.style.fontVariationSettings = "'FILL' 0";
+        btn.classList.remove('text-primary');
+        btn.classList.add('text-gray-400');
+    }
+}
+
 function setFilter(type) {
     currentFilter = type;
     const allBtn = document.getElementById('filterAllBtn');
@@ -417,8 +439,10 @@ function initiateAddTodo() {
     document.getElementById('todoModalTitle').innerText = "New Task";
     document.getElementById('todoModalNameInput').value = text; 
     document.getElementById('todoDateInput').value = '';
-    if(document.getElementById('todoNoteInput')) document.getElementById('todoNoteInput').value = ""; 
     
+    document.getElementById('todoPinnedInput').value = 'true'; 
+    toggleModalPinState(); // Reset pin to false
+
     document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
     document.querySelector('.p-btn.med')?.classList.add('selected', 'ring-2', 'ring-primary');
     
@@ -440,6 +464,12 @@ function initiateEditTodo(id) {
         document.getElementById('todoDateInput').value = localIso;
     } else { document.getElementById('todoDateInput').value = ''; }
     
+    // Pin State
+    const isPinned = todo.pinned === true;
+    document.getElementById('todoPinnedInput').value = (!isPinned).toString(); 
+    toggleModalPinState(); 
+    
+    // Priority
     document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('selected', 'ring-2', 'ring-primary'));
     const pBtn = document.querySelector(`.p-btn[data-priority="${todo.priority}"]`);
     if(pBtn) pBtn.classList.add('selected', 'ring-2', 'ring-primary');
@@ -451,8 +481,11 @@ function initiateEditTodo(id) {
 function finalizeAddTodo() {
     const nameVal = document.getElementById('todoModalNameInput').value.trim();
     if (!nameVal) return;
+    
     const dateVal = document.getElementById('todoDateInput').value;
     const deadlineObj = dateVal ? new Date(dateVal) : null;
+    const isPinned = document.getElementById('todoPinnedInput').value === 'true';
+
     let priority = 'med';
     const selectedP = document.querySelector('.p-btn.selected');
     if(selectedP) priority = selectedP.dataset.priority;
@@ -468,13 +501,14 @@ function finalizeAddTodo() {
         const index = todos.findIndex(t => t.id == editingTodoId);
         if (index > -1) {
             todos[index].text = nameVal;
+            todos[index].pinned = isPinned;
+            todos[index].note = existingNote;
             todos[index].deadlineISO = deadlineObj ? deadlineObj.toISOString() : "";
             todos[index].deadlineText = deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline";
             todos[index].priority = priority;
-            // Note is preserved
         }
     } else {
-        const todoObj = { id: Date.now(), text: nameVal, note: "", deadlineISO: deadlineObj ? deadlineObj.toISOString() : "", deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline", priority: priority };
+        const todoObj = { id: Date.now(), text: nameVal, note: "", pinned: isPinned, deadlineISO: deadlineObj ? deadlineObj.toISOString() : "", deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline", priority: priority };
         todos.push(todoObj);
     }
     saveTodos(todos); renderTodos(todos); closeTodoModal(); document.getElementById('todoInput').value = ''; 
@@ -490,16 +524,33 @@ function renderTodos(todos) {
     let filteredTodos = todos;
     if (currentFilter === 'today') { const todayStr = new Date().toDateString(); filteredTodos = todos.filter(t => { if (!t.deadlineISO) return false; return new Date(t.deadlineISO).toDateString() === todayStr; }); }
     else if (currentFilter === 'upcoming') { const today = new Date(); today.setHours(0,0,0,0); filteredTodos = todos.filter(t => { if (!t.deadlineISO) return false; const d = new Date(t.deadlineISO); d.setHours(0,0,0,0); return d > today; }); }
-    filteredTodos.sort((a,b) => { const pVal = { high: 3, med: 2, low: 1 }; const pDiff = pVal[b.priority] - pVal[a.priority]; if (pDiff !== 0) return pDiff; const tA = a.deadlineISO ? new Date(a.deadlineISO).getTime() : 9999999999999; const tB = b.deadlineISO ? new Date(b.deadlineISO).getTime() : 9999999999999; return tA - tB; });
+    
+    // Sort: Pinned -> Priority -> Date
+    filteredTodos.sort((a,b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        const pVal = { high: 3, med: 2, low: 1 };
+        const pDiff = pVal[b.priority] - pVal[a.priority];
+        if (pDiff !== 0) return pDiff;
+        const tA = a.deadlineISO ? new Date(a.deadlineISO).getTime() : 9999999999999;
+        const tB = b.deadlineISO ? new Date(b.deadlineISO).getTime() : 9999999999999;
+        return tA - tB;
+    });
+
     if (filteredTodos.length === 0) { list.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm italic animate-fade-in">No tasks found.</div>`; return; }
     filteredTodos.forEach((t, index) => createTodoElement(t, list, index));
 }
 
 function createTodoElement(todoObj, container, index = 0) {
     const div = document.createElement('div');
-    // Group active logic for Mobile Reveal
+    // Mobile Reveal Logic: Row click = toggle active
     div.className = "task-item group relative flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
     
+    if (todoObj.pinned) {
+        div.classList.add("border-l-4", "border-l-primary", "bg-blue-50/30", "dark:bg-blue-900/10");
+        div.classList.remove("border-gray-100", "dark:border-gray-700"); // Remove default border logic
+    }
+
     div.addEventListener('click', (e) => {
         const isActive = div.classList.contains('active');
         document.querySelectorAll('.task-item.active').forEach(el => el.classList.remove('active'));
@@ -519,6 +570,8 @@ function createTodoElement(todoObj, container, index = 0) {
 
     div.innerHTML = `
         <div class="flex items-center gap-3 flex-1 min-w-0">
+             ${todoObj.pinned ? `<span class="material-symbols-outlined text-xs text-primary -mr-1 rotate-45">keep</span>` : ''}
+            
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate leading-snug select-text">${escapeHtml(todoObj.text)}</p>
                 <div class="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
@@ -529,7 +582,7 @@ function createTodoElement(todoObj, container, index = 0) {
         </div>
         
         <div class="flex items-center gap-2 shrink-0">
-            <div class="flex items-center gap-1 pl-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-[.active]:opacity-100 group-[.active]:pointer-events-auto transition-all duration-200">
+             <div class="flex items-center gap-1 pl-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-[.active]:opacity-100 group-[.active]:pointer-events-auto transition-all duration-200">
                 <button class="note-btn p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition ${noteIconColor}" title="View/Edit Note">
                     <span class="material-symbols-outlined text-lg">description</span>
                 </button>
