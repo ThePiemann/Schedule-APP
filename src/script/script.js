@@ -547,8 +547,8 @@ function createTodoElement(todoObj, container, index = 0) {
     div.className = "task-item group relative flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
     
     if (todoObj.pinned) {
-        div.classList.add("border-l-4", "border-l-primary", "bg-blue-50/30", "dark:bg-blue-900/10");
-        div.classList.remove("border-gray-100", "dark:border-gray-700"); // Remove default border logic
+        div.classList.add("task-pinned", "border-l-4"); // New class defined in style.css
+        div.classList.remove("border-gray-100", "dark:border-gray-700"); 
     }
 
     div.addEventListener('click', (e) => {
