@@ -78,6 +78,16 @@ input, textarea, select {
 .border-primary { border-color: var(--primary) !important; }
 .ring-primary { --tw-ring-color: var(--primary) !important; }
 
+/* Dynamic Pinned Task Style (Replaces hardcoded blue classes in JS) */
+.task-pinned {
+    border-left-width: 4px;
+    border-left-color: var(--primary) !important;
+    background-color: rgba(var(--primary-rgb), 0.08) !important; 
+}
+.dark .task-pinned {
+    background-color: rgba(var(--primary-rgb), 0.15) !important;
+}
+
 /* Improved Week Badge (Gradient Text & Border) */
 .week-badge {
     background-color: rgba(var(--primary-rgb), 0.08);
@@ -94,19 +104,29 @@ input, textarea, select {
     letter-spacing: 0.5px;
 }
 
+/* REDUCE MOTION LOGIC */
+/* If data-motion="reduce" is on HTML tag, turn off movement animations */
+[data-motion="reduce"] * {
+    animation-duration: 0s !important;
+    animation-name: none !important;
+    transition-duration: 0.1s !important; /* Keep super fast fade for UI feedback */
+    transform: none !important; /* Stop hovers from moving things */
+}
+
+/* Standard Animations (Only run if motion NOT reduced) */
+html:not([data-motion="reduce"]) .animate-fade-in { animation: fadeIn 0.5s var(--smooth-easing) forwards; }
+html:not([data-motion="reduce"]) .animate-slide-up { animation: slideUp 0.5s var(--smooth-easing) forwards; }
+html:not([data-motion="reduce"]) .animate-pop-in { animation: popIn 0.4s var(--spring-easing) forwards; }
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+
 /* --- ANIMATIONS --- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes slideInRight { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
-
-.animate-fade-in { animation: fadeIn 0.5s var(--smooth-easing) forwards; }
-.animate-slide-up { animation: slideUp 0.5s var(--smooth-easing) forwards; }
-.animate-pop-in { animation: popIn 0.4s var(--spring-easing) forwards; }
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
 
 /* --- VIBRANT THEME --- */
 /* More colorful background */
