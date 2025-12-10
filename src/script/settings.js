@@ -46,6 +46,14 @@ function initSettings() {
         });
     }
 
+    const motionToggle = document.getElementById('settingMotionToggle'); // Assuming ID is settingMotionToggle in HTML
+    if (motionToggle) {
+        motionToggle.addEventListener('change', (e) => {
+            localStorage.setItem('reduceMotion', e.target.checked);
+            loadTheme(); // Re-apply attribute
+        });
+    }
+
     setupSettingsNavigation();
 }
 
@@ -80,6 +88,14 @@ function loadTheme() {
             btn.classList.remove('ring-2', 'ring-gray-400');
         }
     });
+
+    const isReduced = localStorage.getItem('reduceMotion') === 'true';
+    if (isReduced) document.documentElement.setAttribute('data-motion', 'reduce');
+    else document.documentElement.removeAttribute('data-motion');
+    
+    // Sync Toggle UI
+    const motionToggle = document.getElementById('settingMotionToggle'); // Check your HTML ID (often the last switch)
+    if (motionToggle) motionToggle.checked = isReduced;
 }
 
 function toggleTheme() {
