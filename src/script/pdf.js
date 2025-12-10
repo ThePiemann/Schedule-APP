@@ -1,6 +1,4 @@
-/* --------------------------
-   PDF GENERATION LOGIC
-   -------------------------- */
+/* src/script/pdf.js */
 
 // Global access to PDF lib
 window.jsPDF = window.jspdf.jsPDF;
@@ -28,6 +26,7 @@ function openPdfPreview() {
     const modal = document.getElementById('pdfPreviewModal');
     const printContainer = document.getElementById('printContainer');
     
+    // Base width for high resolution
     if (printContainer) printContainer.style.minWidth = "1400px";
 
     const trimToggle = document.getElementById('pdfTrimToggle');
@@ -47,6 +46,7 @@ function renderPdfGrid() {
     let startH = 7;
     let endH = 20;
 
+    // Smart Crop Logic
     if (trimToggle && !trimToggle.checked) {
         let foundMin = 20; let foundMax = 7; let hasData = false;
         for (let h = 7; h <= 20; h++) {
@@ -61,11 +61,25 @@ function renderPdfGrid() {
         if (hasData) { startH = foundMin; endH = foundMax; }
     }
 
+    // --- ROW HEIGHT CALCULATION ---
+    // A4 Aspect Ratio is ~1.41 (Width/Height) -> Height is ~70% of width.
+    // Container Width = 1400px. Target Height ~ 990px.
+    // Header is approx 50px. Available for rows: 940px.
+    const rowCount = endH - startH + 1;
+    let minRowHeight = 80; // Default minimum
+    
+    // Calculate expanded height to fill page
+    let dynamicRowHeight = Math.floor(940 / rowCount);
+    // Ensure it doesn't get too small (if full day) or ridiculously huge (if 1 row)
+    if (dynamicRowHeight < 80) dynamicRowHeight = 80; 
+    if (dynamicRowHeight > 180) dynamicRowHeight = 180; // Cap max height
+
     const _days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     
     dateLabel.innerText = "Generated on " + new Date().toLocaleDateString();
     printGrid.innerHTML = '';
 
+    // Header
     const headerRow = document.createElement('div');
     headerRow.className = 'print-header-row';
     headerRow.innerHTML = `<div class="p-3 text-center flex items-center justify-center">Time</div>`; 
@@ -74,6 +88,7 @@ function renderPdfGrid() {
     });
     printGrid.appendChild(headerRow);
 
+    // Rows
     for (let h = startH; h <= endH; h++) {
         const row = document.createElement('div');
         row.className = 'print-row';
@@ -81,11 +96,15 @@ function renderPdfGrid() {
         const timeCol = document.createElement('div');
         timeCol.className = 'print-time-col';
         timeCol.innerText = `${h}:00`;
+        // Apply Dynamic Height
+        timeCol.style.height = `${dynamicRowHeight}px`;
         row.appendChild(timeCol);
 
         for (let d = 0; d < 7; d++) {
             const slot = document.createElement('div');
             slot.className = 'print-slot-col';
+            // Apply Dynamic Height
+            slot.style.height = `${dynamicRowHeight}px`;
             
             const rawData = localStorage.getItem(`schedule-${d}-${h}`);
             if (rawData) {
@@ -96,7 +115,7 @@ function renderPdfGrid() {
 
                 let color = '#e5e7eb';
                 const colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
-                // Color fallback logic
+                
                 if (data.color) color = data.color;
                 else {
                     const key = data.subject.trim().toUpperCase();
@@ -107,9 +126,8 @@ function renderPdfGrid() {
                 if(!data.weekType) data.weekType = "every";
                 if(!data.type) data.type = "";
 
-                // --- PDF CLEAN UI (Matching Grid) ---
                 slot.innerHTML = `
-                    <div style="background-color: ${color};" class="print-event-card w-full h-full relative p-1 box-border">
+                    <div style="background-color: ${color};" class="print-event-card w-full h-full relative p-1 box-border flex flex-col justify-center">
                         
                         ${data.weekType !== 'every' ? 
                             `<div class="absolute top-1 left-1 text-[8px] font-black uppercase tracking-wider text-gray-500 opacity-60">${data.weekType}</div>` 
@@ -119,7 +137,7 @@ function renderPdfGrid() {
                             `<div class="absolute top-1 right-1 text-[9px] font-bold text-gray-500 opacity-70">${data.location}</div>` 
                             : ''}
 
-                        <div class="absolute inset-0 flex flex-col justify-center items-center px-4">
+                        <div class="flex flex-col justify-center items-center px-4 z-10">
                             <div class="font-black text-[12px] uppercase leading-tight tracking-wide text-gray-800 text-center">${data.subject}</div>
                             <div class="text-[10px] font-bold text-gray-500 mt-0.5">${data.start} - ${data.end}</div>
                         </div>
