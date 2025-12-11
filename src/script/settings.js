@@ -308,15 +308,25 @@ function initAccountSettings() {
     if(confirmCrop) {
         confirmCrop.addEventListener('click', () => {
             if(!cropper) return;
+            // 1. Get the image as a small file (300x300)
             const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
+            
+            // 2. Save to Local Storage
             localStorage.setItem('userProfileImage', canvas.toDataURL());
             
+            // 3. Update the UI immediately
             if(imgElement && iconElement) {
                 imgElement.src = canvas.toDataURL();
                 imgElement.classList.remove('hidden');
                 iconElement.classList.add('hidden');
             }
+            
             closeCropLogic();
+
+            // 4. ADD THIS: Trigger Cloud Save immediately
+            if(typeof window.saveUserData === 'function') {
+                window.saveUserData();
+            }
         });
     }
     
