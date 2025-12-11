@@ -1,3 +1,9 @@
+/* src/script/script.js */
+
+// 1. IMPORT FIREBASE
+import { auth, db, doc, getDoc, setDoc } from './auth.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
 /* --------------------------
    Global State
    -------------------------- */
@@ -9,69 +15,109 @@ let currentSelectedSlot = null;
 let navDate = new Date(); 
 let currentOverviewDate = new Date(); 
 
-// New State
 let isEvenWeek = false;
-
-// Todo State
 let editingTodoId = null;
 let currentFilter = 'all'; 
 let todoToDeleteId = null; 
 
+let currentUser = null; // Store logged in user
+
 /* --------------------------
-   UTILITIES
+   FIREBASE SYNC LOGIC
    -------------------------- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-}
 
-function linkify(text) {
-    if (!text) return '';
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline relative z-20" onclick="event.stopPropagation()">${url}</a>`;
-    });
-}
+// A. Load Data from Firestore
+async function loadUserData(user) {
+    try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
 
-function updateDateTime() {
-    const d = document.getElementById('datetimeDisplay');
-    if(d) d.innerText = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' });
-}
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // 1. Restore to LocalStorage
+            // Schedule
+            if (data.schedule) {
+                Object.keys(data.schedule).forEach(key => {
+                    localStorage.setItem(key, data.schedule[key]);
+                });
+            }
+            // Tasks
+            if (data.advancedTodos) {
+                localStorage.setItem('advancedTodos', data.advancedTodos);
+            }
+            // Settings/Colors
+            if (data.subjectColors) localStorage.setItem('subjectColors', data.subjectColors);
+            if (data.settings) {
+                Object.keys(data.settings).forEach(key => {
+                    localStorage.setItem(key, data.settings[key]);
+                });
+            }
 
-function initWeekCounter() {
-    const div = document.getElementById('weekDisplay');
-    if(!div) return;
-
-    const showCounter = localStorage.getItem('showWeekCounter') === 'true';
-    if (!showCounter) {
-        div.classList.add('hidden');
-        return;
+            console.log("Data loaded from Cloud");
+            // 2. Refresh UI
+            refreshAllViews();
+            loadTodos();
+            initWeekCounter(); // Re-calc with loaded settings
+            if (typeof loadTheme === 'function') loadTheme(); // Update theme if settings.js loaded
+        } else {
+            console.log("No cloud data found. Using local.");
+        }
+    } catch (e) {
+        console.error("Error loading data:", e);
     }
-    div.classList.remove('hidden');
-
-    const d = new Date();
-    let weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
-    weekNum += 1; 
-    
-    const invert = localStorage.getItem('weekParityInvert') === 'true';
-    let isEven = (weekNum % 2 === 0);
-    
-    if (invert) isEven = !isEven;
-    
-    isEvenWeek = isEven; 
-
-    div.innerText = isEven ? "Week: EVEN" : "Week: ODD";
-    div.className = "week-badge text-xs font-bold px-3 py-1 rounded transition-colors";
 }
+
+// B. Save Data to Firestore
+async function saveUserData() {
+    if (!currentUser) return;
+
+    const dataToSave = {
+        schedule: {},
+        advancedTodos: localStorage.getItem('advancedTodos') || '[]',
+        subjectColors: localStorage.getItem('subjectColors') || '{}',
+        settings: {},
+        lastUpdated: new Date().toISOString()
+    };
+
+    // Gather Schedule keys (schedule-0-7 to schedule-6-20)
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('schedule-')) {
+            dataToSave.schedule[key] = localStorage.getItem(key);
+        }
+        // Gather miscellaneous settings
+        if (['userFirstName', 'userLastName', 'isDarkMode', 'isVibrant', 'showWeekCounter', 'isEvenOddEnabled'].includes(key)) {
+            dataToSave.settings[key] = localStorage.getItem(key);
+        }
+    }
+
+    try {
+        await setDoc(doc(db, "users", currentUser.uid), dataToSave, { merge: true });
+        console.log("Saved to Cloud...");
+    } catch (e) {
+        console.error("Error saving data:", e);
+    }
+}
+
 
 /* --------------------------
-   INIT
+   INIT & LISTENERS
    -------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+    // Check Auth Status immediately
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            console.log("Logged in as:", user.email);
+            // Load cloud data once on startup
+            loadUserData(user); 
+        } else {
+            // Protect Dashboard - redirect if not logged in
+            window.location.href = 'login.html';
+        }
+    });
+
     initCalendar(); 
     currentOverviewDate = new Date(); 
     initWeekCounter(); 
@@ -103,7 +149,6 @@ function setupEventListeners() {
     safeAddClick('addTodoBtn', initiateAddTodo);
     document.getElementById('todoInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') initiateAddTodo(); });
     
-    // Updated Cancel Button ID
     safeAddClick('cancelTodoBtn', closeTodoModal); 
     safeAddClick('saveTodoDetailsBtn', finalizeAddTodo);
     
@@ -127,7 +172,6 @@ function setupEventListeners() {
     safeAddClick('cancelDeleteBtn', closeDeleteModal);
     safeAddClick('confirmDeleteBtn', confirmDeleteTodo);
     
-    // Bind Pin Toggle in Modal
     safeAddClick('todoModalPinBtn', toggleModalPinState);
 }
 
@@ -164,6 +208,36 @@ function safeAddClick(id, fn) {
 }
 
 /* --------------------------
+   UTILITIES
+   -------------------------- */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function updateDateTime() {
+    const d = document.getElementById('datetimeDisplay');
+    if(d) d.innerText = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function initWeekCounter() {
+    const div = document.getElementById('weekDisplay');
+    if(!div) return;
+    const showCounter = localStorage.getItem('showWeekCounter') === 'true';
+    if (!showCounter) { div.classList.add('hidden'); return; }
+    div.classList.remove('hidden');
+    const d = new Date();
+    let weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
+    weekNum += 1; 
+    const invert = localStorage.getItem('weekParityInvert') === 'true';
+    let isEven = (weekNum % 2 === 0);
+    if (invert) isEven = !isEven;
+    isEvenWeek = isEven; 
+    div.innerText = isEven ? "Week: EVEN" : "Week: ODD";
+    div.className = "week-badge text-xs font-bold px-3 py-1 rounded transition-colors";
+}
+
+/* --------------------------
    DATA & COLORS
    -------------------------- */
 function getSubjectColor(subject) {
@@ -192,16 +266,7 @@ function parseSlotData(rawData, defaultHour) {
             return data;
         }
     } catch(e) {}
-    return {
-        subject: rawData,
-        start: `${defaultHour.toString().padStart(2,'0')}:00`,
-        end: `${(defaultHour + 1).toString().padStart(2,'0')}:00`,
-        location: "",
-        type: "",
-        teacher: "",
-        color: getSubjectColor(rawData),
-        weekType: "every"
-    };
+    return { subject: rawData, start: `${defaultHour.toString().padStart(2,'0')}:00`, end: `${(defaultHour + 1).toString().padStart(2,'0')}:00`, location: "", type: "", teacher: "", color: getSubjectColor(rawData), weekType: "every" };
 }
 
 /* --------------------------
@@ -216,17 +281,14 @@ function showDailyOverview(dayIndex, dateObj) {
     
     let hasClass = false;
     let delayCounter = 0; 
-
     for (let h = startHour; h <= endHour; h++) {
         const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
         if (rawData) {
             const data = parseSlotData(rawData, h);
             hasClass = true;
-            
             const div = document.createElement('div');
             div.className = "class-entry-animate flex items-stretch gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-white/5 transition";
             div.style.animationDelay = `${delayCounter * 0.1}s`; 
-            
             div.innerHTML = `
                 <div class="w-1.5 rounded-full shadow-sm flex-shrink-0" style="background-color: ${data.color}"></div>
                 <div class="flex-1 flex justify-between gap-2 py-1">
@@ -258,7 +320,6 @@ function initCalendar() {
     grid.innerHTML = '';
     const timeHeader = document.createElement('div'); timeHeader.className = 'header-cell'; timeHeader.innerText = 'TIME'; grid.appendChild(timeHeader);
     days.forEach(day => { const dh = document.createElement('div'); dh.className = 'header-cell'; dh.innerText = day; grid.appendChild(dh); });
-    
     let gridDelayCounter = 0; 
 
     for (let hour = startHour; hour <= endHour; hour++) {
@@ -268,7 +329,6 @@ function initCalendar() {
             slot.className = 'slot group'; 
             slot.dataset.day = index; 
             slot.dataset.hour = hour;
-            
             slot.addEventListener('dragover', handleDragOver);
             slot.addEventListener('dragenter', handleDragEnter);
             slot.addEventListener('dragleave', handleDragLeave);
@@ -277,7 +337,6 @@ function initCalendar() {
                 if(slot.classList.contains('just-dropped')) { slot.classList.remove('just-dropped'); return; }
                 openEventModal(slot);
             });
-            
             const rawData = localStorage.getItem(`schedule-${index}-${hour}`);
             if(rawData) { 
                 const data = parseSlotData(rawData, hour);
@@ -285,7 +344,6 @@ function initCalendar() {
                 slot.style.color = '#1f2937'; 
                 slot.draggable = true;
                 slot.addEventListener('dragstart', handleDragStart);
-
                 slot.innerHTML = `
                     <div class="class-entry-animate w-full h-full relative" style="animation-delay: ${gridDelayCounter * 0.05}s">
                         ${data.weekType !== 'every' ? `<div class="absolute top-1 left-1 text-[8px] font-black uppercase tracking-wider text-gray-500 opacity-60 pointer-events-none select-none">${data.weekType}</div>` : ''}
@@ -326,7 +384,10 @@ function handleDrop(e) {
     
     if (sourceObj) localStorage.setItem(targetKey, JSON.stringify(sourceObj)); else localStorage.removeItem(targetKey);
     if (targetObj) localStorage.setItem(sourceKey, JSON.stringify(targetObj)); else localStorage.removeItem(sourceKey);
-    this.classList.add('just-dropped'); refreshAllViews(); 
+    
+    this.classList.add('just-dropped'); 
+    refreshAllViews();
+    saveUserData(); // SYNC TO FIREBASE
 }
 
 /* --------------------------
@@ -388,17 +449,23 @@ function saveEventFromModal() {
     const eventData = { subject, start, end, location: loc, type, teacher, color, weekType };
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
     localStorage.setItem(key, JSON.stringify(eventData));
-    closeEventModal(); refreshAllViews();
+    
+    closeEventModal(); 
+    refreshAllViews();
+    saveUserData(); // SYNC TO FIREBASE
 }
 
 function deleteEventFromModal() {
     if (!currentSelectedSlot) return;
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
-    localStorage.removeItem(key); closeEventModal(); refreshAllViews();
+    localStorage.removeItem(key); 
+    closeEventModal(); 
+    refreshAllViews();
+    saveUserData(); // SYNC TO FIREBASE
 }
 
 /* --------------------------
-   TODO LOGIC (Mobile Click Fix & Dot Placement)
+   TODO LOGIC 
    -------------------------- */
 function toggleModalPinState() {
     const input = document.getElementById('todoPinnedInput');
@@ -511,7 +578,11 @@ function finalizeAddTodo() {
         const todoObj = { id: Date.now(), text: nameVal, note: "", pinned: isPinned, deadlineISO: deadlineObj ? deadlineObj.toISOString() : "", deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline", priority: priority };
         todos.push(todoObj);
     }
-    saveTodos(todos); renderTodos(todos); closeTodoModal(); document.getElementById('todoInput').value = ''; 
+    saveTodos(todos); 
+    renderTodos(todos); 
+    closeTodoModal(); 
+    document.getElementById('todoInput').value = ''; 
+    saveUserData(); // SYNC TO FIREBASE
 }
 
 function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); document.getElementById('todoModal').classList.remove('flex'); }
@@ -547,7 +618,7 @@ function createTodoElement(todoObj, container, index = 0) {
     div.className = "task-item group relative flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer mb-2 transform hover:-translate-y-0.5 hover:shadow-md";
     
     if (todoObj.pinned) {
-        div.classList.add("task-pinned", "border-l-4"); // New class defined in style.css
+        div.classList.add("task-pinned", "border-l-4"); 
         div.classList.remove("border-gray-100", "dark:border-gray-700"); 
     }
 
@@ -593,25 +664,17 @@ function createTodoElement(todoObj, container, index = 0) {
                     <span class="material-symbols-outlined text-lg">delete</span>
                 </button>
             </div>
-            
             <div class="w-2.5 h-2.5 rounded-full ${dotColor} shrink-0 ring-2 ring-white dark:ring-gray-700 shadow-sm ml-1"></div>
         </div>
     `;
 
-    // Bind Events
     div.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); initiateEditTodo(todoObj.id); });
     div.querySelector('.note-btn').addEventListener('click', (e) => { e.stopPropagation(); openNoteModal(todoObj.id); });
-    div.querySelector('.delete-btn').addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        askDeleteTodo(todoObj.id); 
-    });
+    div.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); askDeleteTodo(todoObj.id); });
     
     container.appendChild(div);
 }
 
-/* --------------------------
-   DELETE MODAL LOGIC
-   -------------------------- */
 function askDeleteTodo(id) {
     todoToDeleteId = id;
     const modal = document.getElementById('deleteModal');
@@ -632,13 +695,11 @@ function confirmDeleteTodo() {
         todos = todos.filter(t => t.id != todoToDeleteId);
         saveTodos(todos);
         renderTodos(todos);
+        saveUserData(); // SYNC TO FIREBASE
     }
     closeDeleteModal();
 }
 
-/* --------------------------
-   NOTE MODAL LOGIC
-   -------------------------- */
 let currentNoteTodoId = null;
 function openNoteModal(id) {
     const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
@@ -656,7 +717,12 @@ function saveNoteFromModal() {
     const noteVal = document.getElementById('noteInput').value.trim();
     const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
     const index = todos.findIndex(t => t.id == currentNoteTodoId);
-    if (index > -1) { todos[index].note = noteVal; saveTodos(todos); renderTodos(todos); }
+    if (index > -1) { 
+        todos[index].note = noteVal; 
+        saveTodos(todos); 
+        renderTodos(todos); 
+        saveUserData(); // SYNC TO FIREBASE
+    }
     closeNoteModal();
 }
 
@@ -690,8 +756,3 @@ function renderMonthCalendar() {
         grid.appendChild(dayDiv);
     }
 }
-const ANALYTICS_NAMESPACE = 'studentdash_v1_public_tracker'; const ANALYTICS_KEY = 'visits';
-document.addEventListener('DOMContentLoaded', () => { trackVisit(); const aboutBtn = document.getElementById('setBtnAbout'); if (aboutBtn) { aboutBtn.addEventListener('click', fetchVisitReport); } });
-function trackVisit() { if (sessionStorage.getItem('visit_counted')) return; fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/up`).then(res => res.json()).then(data => { updateAnalyticsUI(data.count); sessionStorage.setItem('visit_counted', 'true'); }).catch(err => console.warn("Analytics Error:", err)); }
-function fetchVisitReport() { const display = document.getElementById('analyticsTotalVisits'); if (!display) return; display.innerText = "..."; fetch(`https://api.counterapi.dev/v1/${ANALYTICS_NAMESPACE}/${ANALYTICS_KEY}/`).then(res => res.json()).then(data => { updateAnalyticsUI(data.count); }).catch(err => { display.innerText = "N/A"; }); }
-function updateAnalyticsUI(count) { const display = document.getElementById('analyticsTotalVisits'); if (display) { display.innerText = new Intl.NumberFormat().format(count); } }
