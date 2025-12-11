@@ -80,21 +80,22 @@ async function saveUserData() {
         lastUpdated: new Date().toISOString()
     };
 
-    // Gather Schedule keys (schedule-0-7 to schedule-6-20)
+    // Gather Schedule keys
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('schedule-')) {
             dataToSave.schedule[key] = localStorage.getItem(key);
         }
-        // Gather miscellaneous settings
-        if (['userFirstName', 'userLastName', 'isDarkMode', 'isVibrant', 'showWeekCounter', 'isEvenOddEnabled'].includes(key)) {
+        
+        // ADDED: 'userProfileImage' to this list
+        if (['userFirstName', 'userLastName', 'isDarkMode', 'isVibrant', 'showWeekCounter', 'isEvenOddEnabled', 'userProfileImage'].includes(key)) {
             dataToSave.settings[key] = localStorage.getItem(key);
         }
     }
 
     try {
         await setDoc(doc(db, "users", currentUser.uid), dataToSave, { merge: true });
-        console.log("Saved to Cloud...");
+        console.log("Saved to Cloud (including Profile Pic)...");
     } catch (e) {
         console.error("Error saving data:", e);
     }
@@ -756,3 +757,5 @@ function renderMonthCalendar() {
         grid.appendChild(dayDiv);
     }
 }
+
+window.saveUserData = saveUserData;
