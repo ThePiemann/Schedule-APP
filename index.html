@@ -3,238 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudentDash - Master Your Academic Schedule</title>
+    <title>StudentDash - The Ultimate Student Planner</title>
+    <meta name="description" content="Master your academic life with the best schedule and task manager for students.">
     
     <link rel="icon" type="image/png" href="src/images/studentDash.png">
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-
-    <link rel="stylesheet" href="src/style/landing-style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
 
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        "primary": "#4A90E2",
-                        "primary-dark": "#357ABD",
-                        "bg-dark": "#111518",
+                    colors: { primary: "#4A90E2", darkbg: "#111827" },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    animation: {
+                        'float-slow': 'float 6s ease-in-out infinite',
+                        'float-medium': 'float 5s ease-in-out infinite',
+                        'pulse-ring': 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
-                    fontFamily: {
-                        "sans": ["Inter", "sans-serif"]
+                    keyframes: {
+                        float: { 
+                            '0%, 100%': { transform: 'translateY(0)' }, 
+                            '50%': { transform: 'translateY(-15px)' } 
+                        },
+                        'pulse-ring': {
+                            '0%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.7)' },
+                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 10px rgba(239, 68, 68, 0)' },
+                            '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(239, 68, 68, 0)' }
+                        }
                     }
                 }
             }
         }
     </script>
+    <style>
+        body {
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE 10+ */
+            user-select: none;         /* Standard */
+            -webkit-tap-highlight-color: transparent; /* Removes blue box on mobile tap */
+        }
+
+        input, textarea, select {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .text-gradient { background: linear-gradient(to right, #4A90E2, #8E2DE2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .dark .glass-card { background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
 </head>
-<body class="font-sans antialiased text-gray-900 bg-white dark:bg-bg-dark transition-colors duration-300">
+<body class="font-sans bg-gray-50 dark:bg-darkbg text-gray-900 dark:text-white transition-colors duration-300 overflow-x-hidden">
 
-    <nav class="fixed w-full z-50 bg-white/80 dark:bg-bg-dark/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                        <span class="material-symbols-outlined text-[20px]">school</span>
-                    </div>
-                    <span class="font-bold text-xl tracking-tight dark:text-white">StudentDash</span>
+    <nav class="fixed w-full z-50 bg-white/90 dark:bg-darkbg/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:rotate-12 transition-transform">
+                    <span class="material-symbols-outlined text-2xl">school</span>
                 </div>
+                <span class="text-xl font-bold tracking-tight">StudentDash</span>
+            </a>
 
-                <div class="hidden md:flex items-center gap-8">
-                    <a href="#features" class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 transition">Features</a>
-                    <a href="#testimonials" class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 transition">Testimonials</a>
-                    <a href="#about" class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 transition">About</a>
-                </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition">Features</a>
+                <a href="#how-it-works" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition">How it Works</a>
+                <a href="#faq" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition">FAQ</a>
+            </div>
 
-                <div class="flex items-center gap-3">
-                    <a href="pages/login.html" class="text-sm font-bold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Log In</a>
-                    <a href="pages/signup.html" class="px-5 py-2.5 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5">
-                        Get Started
+            <div class="flex items-center gap-4">
+                
+                <div id="navLoginContainer">
+                    <a href="pages/login.html" class="px-6 py-2.5 text-sm font-bold text-white bg-primary hover:bg-blue-600 rounded-full transition-all shadow-lg shadow-primary/30">
+                        Log In
                     </a>
+                </div>
+
+                <div id="navProfileContainer" class="relative hidden">
+                    <button id="profileDropdownBtn" class="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 p-0.5 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600 transition overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <img id="navProfileImg" src="" alt="Profile" class="w-full h-full rounded-full object-cover hidden">
+                        <div id="navProfileIcon" class="w-full h-full rounded-full bg-primary flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined text-2xl">person</span>
+                        </div>
+                    </button>
+
+                    <div id="profileDropdownMenu" class="absolute right-0 mt-2 w-80 bg-[#E9EEF6] dark:bg-[#1F1F1F] rounded-[24px] shadow-[0_4px_8px_3px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.3)] overflow-hidden hidden origin-top-right z-50 animate-pop-in border border-white/50 dark:border-black/50">
+                        
+                        <button id="closeDropdownBtn" class="absolute top-3 right-3 p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+
+                        <div class="flex flex-col items-center pt-8 pb-5 px-4 text-center">
+                            
+                            <p id="menuUserEmail" class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-4 bg-white/50 dark:bg-black/20 px-3 py-0.5 rounded-full">...</p>
+                            
+                            <div class="relative w-20 h-20 mb-3 group cursor-pointer">
+                                <img id="menuProfileImg" src="" class="w-full h-full rounded-full object-cover hidden border-4 border-white dark:border-[#1F1F1F] shadow-sm">
+                                <div id="menuProfileIcon" class="w-full h-full bg-primary rounded-full flex items-center justify-center text-white border-4 border-white dark:border-[#1F1F1F] shadow-sm">
+                                    <span class="material-symbols-outlined text-4xl">person</span>
+                                </div>
+                                <div class="absolute bottom-0 right-0 bg-white dark:bg-gray-800 p-1.5 rounded-full shadow-md border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary text-xs">photo_camera</span>
+                                </div>
+                            </div>
+
+                            <h3 class="text-xl text-gray-800 dark:text-white font-normal mb-4">Hi, <span id="menuUserName" class="font-semibold">Student</span>!</h3>
+
+                            <a href="pages/dashboard.html#settings" class="inline-block px-6 py-2 rounded-full border border-gray-400 dark:border-gray-600 font-semibold text-xs text-primary hover:bg-white/50 dark:hover:bg-white/5 transition mb-2">
+                                Manage Account
+                            </a>
+                        </div>
+
+                        <div class="mx-3 mb-3 bg-white dark:bg-[#303030] rounded-[20px] overflow-hidden shadow-sm">
+                            <a href="pages/dashboard.html" class="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-gray-700/50 text-left group">
+                                <span class="material-symbols-outlined text-gray-500 group-hover:text-primary transition text-xl">dashboard</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Open Dashboard</p>
+                                </div>
+                            </a>
+
+                            <button id="menuSignOutBtn" class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition text-left group">
+                                <span class="material-symbols-outlined text-gray-500 group-hover:text-red-500 transition text-xl">logout</span>
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-500 transition">Sign out</p>
+                            </button>
+                        </div>
+
+                        <div class="py-3 flex justify-center gap-3 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                            <a href="#" class="hover:underline">Privacy Policy</a>
+                            <span>•</span>
+                            <a href="#" class="hover:underline">Terms of Service</a>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-            <div class="absolute top-20 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-            <div class="absolute top-40 right-1/4 w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] animate-pulse-slow delay-700"></div>
+    <section class="relative pt-32 pb-20 overflow-hidden">
+        <div class="absolute inset-0 -z-10">
+            <div class="absolute top-0 left-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in-up">
-                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                v1.4 Now Available
-            </div>
-            
-            <h1 class="text-5xl md:text-7xl font-black tracking-tight text-gray-900 dark:text-white mb-6 leading-tight animate-fade-in-up delay-100">
-                Organize Your <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">Academic Life</span>
-            </h1>
-            
-            <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400 mb-10 animate-fade-in-up delay-200">
-                Stop juggling messy spreadsheets and paper planners. StudentDash is the all-in-one workspace designed for modern students.
-            </p>
-
-            <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-300">
-                <a href="/pages/dashboard.html" class="px-8 py-4 rounded-full bg-primary text-white text-lg font-bold hover:bg-primary-dark shadow-xl shadow-primary/30 transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
-                    Launch Dashboard
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                </a>
-                <button class="px-8 py-4 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:-translate-y-1">
-                    View Demo
-                </button>
-            </div>
-
-            <div class="mt-20 relative max-w-5xl mx-auto animate-fade-in-up delay-500 group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                <div class="relative bg-gray-900 rounded-xl shadow-2xl overflow-hidden border border-gray-800">
-                    <div class="h-8 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-2">
-                        <div class="flex gap-1.5">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        </div>
-                        <div class="flex-1 text-center">
-                            <div class="bg-gray-900 text-gray-500 text-[10px] py-1 px-3 rounded-md inline-block">studentdash.app</div>
-                        </div>
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
+            <div class="flex-1 text-center md:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-2.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary text-xs font-bold uppercase tracking-wider mb-6">
+                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> v2.0 Live
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
+                    Organize Your <br> <span class="text-gradient">Academic Chaos</span>
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto md:mx-0">
+                    The all-in-one dashboard built for students. Track classes, manage assignments, and never miss a deadline again.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                    <a href="pages/dashboard.html" class="px-8 py-4 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-blue-600 shadow-xl shadow-primary/30 transition hover:-translate-y-1 flex items-center justify-center gap-2">
+                        Launch Dashboard
+                        <span class="material-symbols-outlined">rocket_launch</span>
+                    </a>
+                    <a href="pages/signup.html" class="px-8 py-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-bold text-lg hover:border-primary transition hover:-translate-y-1">
+                        Create Account
+                    </a>
+                </div>
+                
+                <div class="mt-8 flex items-center justify-center md:justify-start gap-4 text-sm text-gray-500">
+                    <div class="flex -space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 border-2 border-white dark:border-darkbg"></div>
+                        <div class="w-8 h-8 rounded-full bg-gray-400 border-2 border-white dark:border-darkbg"></div>
+                        <div class="w-8 h-8 rounded-full bg-gray-500 border-2 border-white dark:border-darkbg flex items-center justify-center text-xs text-white">+1k</div>
                     </div>
-                    <div class="aspect-video bg-gray-50 dark:bg-[#111518] p-4 md:p-8 flex gap-4">
-                        <div class="hidden md:block w-64 bg-white dark:bg-[#1C2227] rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-                            <div class="h-8 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-                            <div class="h-10 w-full bg-primary/10 rounded border-l-4 border-primary"></div>
-                            <div class="h-10 w-full bg-transparent rounded"></div>
-                            <div class="h-10 w-full bg-transparent rounded"></div>
-                        </div>
-                        <div class="flex-1 flex flex-col gap-4">
-                            <div class="h-32 bg-gradient-to-br from-primary to-purple-500 rounded-lg shadow-lg"></div>
-                            <div class="grid grid-cols-3 gap-4 h-full">
-                                <div class="col-span-2 bg-white dark:bg-[#1C2227] rounded-lg border border-gray-200 dark:border-gray-700"></div>
-                                <div class="col-span-1 bg-white dark:bg-[#1C2227] rounded-lg border border-gray-200 dark:border-gray-700"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="absolute inset-0 bg-gradient-to-t from-bg-dark/50 to-transparent pointer-events-none"></div>
+                    <span>Used by 1,000+ students</span>
                 </div>
             </div>
+
+            <div class="flex-1 relative w-full h-[400px] md:h-[500px] perspective-1000 flex items-center justify-center">
+
+    <div class="flex-1 relative w-full h-[400px] md:h-[500px] perspective-1000 flex items-center justify-center">
+
+    <div class="absolute top-32 left-4 md:left-0 z-20 animate-float-medium">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-700 flex items-center gap-4 transform hover:scale-105 transition-transform duration-300">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 shadow-inner">
+                <span class="material-symbols-outlined text-2xl animate-bounce">check</span>
+            </div>
+            <div>
+                <p class="font-bold text-gray-900 dark:text-white text-base">Math Homework</p>
+                <p class="text-xs text-gray-500 font-medium">Completed just now</p>
+            </div>
         </div>
+    </div>
+
+    <div class="absolute bottom-24 right-4 md:right-0 z-20 animate-float-slow" style="animation-delay: 1.5s;">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-700 w-64 transform hover:scale-105 transition-transform duration-300">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <p class="text-xs font-bold text-red-500 uppercase tracking-wider">Next Class</p>
+            </div>
+            <p class="font-bold text-lg text-gray-900 dark:text-white leading-tight mb-1">Computer Science 101</p>
+            <div class="flex items-center gap-2 text-gray-500 text-xs font-medium">
+                <span class="material-symbols-outlined text-sm">location_on</span>
+                <span>Room 304 • 10:00 AM</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute inset-0 bg-gradient-to-tr from-blue-50 to-purple-50 dark:from-darkbg dark:to-darkbg rounded-full opacity-30 blur-3xl -z-10 animate-pulse"></div>
+
+</div>
     </section>
 
-    <section id="features" class="py-24 bg-gray-50 dark:bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4">Everything you need to succeed</h2>
-                <p class="text-lg text-gray-500 dark:text-gray-400">Our platform integrates essential tools to help you manage your academic workload efficiently, without the clutter.</p>
+    <section id="features" class="py-24 bg-white dark:bg-gray-900 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-black mb-4">Why Students Love It</h2>
+                <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">We cut out the clutter. No complex setups, just the tools you need to survive the semester.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white dark:bg-[#1C2227] p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 group">
-                    <div class="w-12 h-12 bg-blue-100 text-primary rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition group">
+                    <div class="w-14 h-14 bg-white dark:bg-gray-700 rounded-2xl flex items-center justify-center text-primary shadow-sm mb-6 group-hover:scale-110 transition">
                         <span class="material-symbols-outlined text-3xl">calendar_month</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Smart Schedule</h3>
-                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Drag-and-drop course editor. Visualize your week with color-coded subjects and location tracking.
-                    </p>
+                    <h3 class="text-xl font-bold mb-3">Smart Schedule</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Visualize your week. Color-code classes, track locations, and handle odd/even weeks automatically.</p>
                 </div>
-
-                <div class="bg-white dark:bg-[#1C2227] p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 group">
-                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-3xl">check_box</span>
+                <div class="p-8 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 transition group">
+                    <div class="w-14 h-14 bg-white dark:bg-gray-700 rounded-2xl flex items-center justify-center text-purple-500 shadow-sm mb-6 group-hover:scale-110 transition">
+                        <span class="material-symbols-outlined text-3xl">check_circle</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Task Management</h3>
-                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Keep track of assignments with priority levels and deadline countdowns. Never miss a submission.
-                    </p>
+                    <h3 class="text-xl font-bold mb-3">Task Tracking</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Never miss an assignment. Priority tags, countdown timers, and notes keep you on top of deadlines.</p>
                 </div>
-
-                <div class="bg-white dark:bg-[#1C2227] p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 group">
-                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-3xl">palette</span>
+                <div class="p-8 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-gray-700 transition group">
+                    <div class="w-14 h-14 bg-white dark:bg-gray-700 rounded-2xl flex items-center justify-center text-green-500 shadow-sm mb-6 group-hover:scale-110 transition">
+                        <span class="material-symbols-outlined text-3xl">cloud_sync</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Dark & Vibrant Modes</h3>
-                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Fully customizable themes including a stunning "Vibrant Mode" with glassmorphism effects.
-                    </p>
+                    <h3 class="text-xl font-bold mb-3">Cloud Sync</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Your data lives in the cloud. Switch from laptop to library computer and your schedule follows you.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="testimonials" class="py-24 border-t border-gray-200 dark:border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-center mb-12 dark:text-white">Loved by Students</h2>
+    <section id="how-it-works" class="py-24 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8">
+                    <h2 class="text-4xl font-black">Simple. Fast. Effective.</h2>
+                    <div class="flex gap-4">
+                        <span class="flex-none w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</span>
+                        <div><h4 class="font-bold text-lg">Create Account</h4><p class="text-gray-500 text-sm">Sign up with Google in seconds. No credit card required.</p></div>
+                    </div>
+                    <div class="flex gap-4">
+                        <span class="flex-none w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</span>
+                        <div><h4 class="font-bold text-lg">Add Your Classes</h4><p class="text-gray-500 text-sm">Fill in your weekly timetable. Support for bi-weekly schedules included.</p></div>
+                    </div>
+                    <div class="flex gap-4">
+                        <span class="flex-none w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">3</span>
+                        <div><h4 class="font-bold text-lg">Stay Organized</h4><p class="text-gray-500 text-sm">Check your dashboard daily for upcoming tasks and classes.</p></div>
+                    </div>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-8 rounded-3xl rotate-2 hover:rotate-0 transition duration-500">
+                    <div class="space-y-4">
+                        <div class="h-12 bg-white dark:bg-gray-700 rounded-xl w-full shadow-sm"></div>
+                        <div class="h-12 bg-white dark:bg-gray-700 rounded-xl w-3/4 shadow-sm"></div>
+                        <div class="h-40 bg-primary/10 rounded-xl w-full border-2 border-primary border-dashed flex items-center justify-center text-primary font-bold">Your Schedule Here</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-black mb-12">What Students Say</h2>
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl relative">
-                    <span class="material-symbols-outlined text-4xl text-gray-300 absolute top-6 right-6">format_quote</span>
-                    <p class="text-gray-600 dark:text-gray-300 mb-6 italic">"This app has been a lifesaver for my college courses. Keeping track of assignments is so much easier now!"</p>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-                             <span class="material-symbols-outlined w-full h-full flex items-center justify-center bg-primary text-white">person</span>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm dark:text-white">Alex Johnson</p>
-                            <p class="text-xs text-gray-500">University Student</p>
-                        </div>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                    <p class="italic text-gray-600 dark:text-gray-300 mb-4">"Finally, a schedule app that doesn't look like an Excel spreadsheet. It's actually fun to use."</p>
+                    <div class="font-bold text-primary">- Sarah, Design Student</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl relative">
-                    <span class="material-symbols-outlined text-4xl text-gray-300 absolute top-6 right-6">format_quote</span>
-                    <p class="text-gray-600 dark:text-gray-300 mb-6 italic">"The class schedule feature is amazing. I love getting reminders before my lectures start. Highly recommend."</p>
-                    <div class="flex items-center gap-3">
-                         <div class="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-                             <span class="material-symbols-outlined w-full h-full flex items-center justify-center bg-purple-500 text-white">person</span>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm dark:text-white">Maria Garcia</p>
-                            <p class="text-xs text-gray-500">Grad Student</p>
-                        </div>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                    <p class="italic text-gray-600 dark:text-gray-300 mb-4">"The task countdowns stress me out in a good way. I actually finish things on time now."</p>
+                    <div class="font-bold text-primary">- James, Engineering</div>
                 </div>
-                 <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl relative">
-                    <span class="material-symbols-outlined text-4xl text-gray-300 absolute top-6 right-6">format_quote</span>
-                    <p class="text-gray-600 dark:text-gray-300 mb-6 italic">"Finally, a simple tool designed for students. The interface is clean and super intuitive."</p>
-                    <div class="flex items-center gap-3">
-                         <div class="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-                             <span class="material-symbols-outlined w-full h-full flex items-center justify-center bg-green-500 text-white">person</span>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm dark:text-white">David Chen</p>
-                            <p class="text-xs text-gray-500">High School Student</p>
-                        </div>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                    <p class="italic text-gray-600 dark:text-gray-300 mb-4">"Cloud sync saved me when my laptop died. Logged in on my phone and saw my exam room instantly."</p>
+                    <div class="font-bold text-primary">- Emily, Pre-Med</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="bg-white dark:bg-bg-dark border-t border-gray-200 dark:border-gray-800 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 bg-primary rounded flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined text-[16px]">school</span>
-                    </div>
-                    <span class="font-bold text-lg dark:text-white">StudentDash</span>
-                </div>
-                <div class="flex gap-8 text-sm text-gray-500">
-                    <a href="#" class="hover:text-primary transition">Privacy</a>
-                    <a href="#" class="hover:text-primary transition">Terms</a>
-                    <a href="#" class="hover:text-primary transition">Contact</a>
-                </div>
+    <section id="faq" class="py-24">
+        <div class="max-w-3xl mx-auto px-6">
+            <h2 class="text-3xl font-black text-center mb-10">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <details class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <summary class="flex justify-between items-center font-bold p-4 cursor-pointer">Is StudentDash free?<span class="material-symbols-outlined transition group-open:rotate-180">expand_more</span></summary>
+                    <div class="px-4 pb-4 text-gray-600 dark:text-gray-400 text-sm">Yes! StudentDash is 100% free for students. We might add premium themes later, but the core features will always be free.</div>
+                </details>
+                <details class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <summary class="flex justify-between items-center font-bold p-4 cursor-pointer">Can I export my schedule?<span class="material-symbols-outlined transition group-open:rotate-180">expand_more</span></summary>
+                    <div class="px-4 pb-4 text-gray-600 dark:text-gray-400 text-sm">Absolutely. You can export your schedule as a PDF image or as an .ICS file to sync with Google Calendar.</div>
+                </details>
+                <details class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <summary class="flex justify-between items-center font-bold p-4 cursor-pointer">Does it work offline?<span class="material-symbols-outlined transition group-open:rotate-180">expand_more</span></summary>
+                    <div class="px-4 pb-4 text-gray-600 dark:text-gray-400 text-sm">The dashboard caches your schedule, so you can view it offline. Changes will sync once you are back online.</div>
+                </details>
             </div>
-            <div class="text-center text-xs text-gray-400">
-                &copy; 2025 StudentDash. All rights reserved.
+        </div>
+    </section>
+
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="bg-primary rounded-3xl p-12 text-center text-white shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+                <h2 class="text-4xl font-black mb-6 relative z-10">Ready to Get Organized?</h2>
+                <p class="text-blue-100 text-lg mb-8 max-w-xl mx-auto relative z-10">Join thousands of students who have ditched the paper planner. It takes less than 30 seconds to set up.</p>
+                <a href="pages/signup.html" class="inline-block px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition shadow-lg relative z-10">Create Free Account</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-darkbg">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined text-sm">school</span>
+                </div>
+                <span class="font-bold text-lg">StudentDash</span>
+            </div>
+            <p class="text-gray-500 text-sm">© 2025 StudentDash. Open Source & Free.</p>
+            <div class="flex gap-6">
+                <a href="#" class="text-gray-400 hover:text-primary transition"><span class="sr-only">Twitter</span><svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg></a>
+                <a href="#" class="text-gray-400 hover:text-primary transition"><span class="sr-only">GitHub</span><svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg></a>
             </div>
         </div>
     </footer>
+
+    <script type="module" src="src/script/index.js"></script>
 
 </body>
 </html>

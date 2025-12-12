@@ -16,7 +16,6 @@ import {
     browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-// FIXED: Added 'updateDoc' to imports
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -46,12 +45,29 @@ export async function loginUser(email, password, remember = true) {
     }
 }
 
-export async function registerUser(email, password, username) {
+// UPDATED: Now takes firstName and lastName
+export async function registerUser(email, password, firstName, lastName) {
     try {
         await setPersistence(auth, browserLocalPersistence);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await updateProfile(user, { displayName: username });
+        
+        // 1. Update Auth Profile
+        const fullName = `${firstName} ${lastName}`;
+        await updateProfile(user, { displayName: fullName });
+
+        // 2. Create User Document in Firestore immediately
+        await setDoc(doc(db, "users", user.uid), {
+            settings: {
+                userFirstName: firstName,
+                userLastName: lastName,
+                isDarkMode: "false",
+                isVibrant: "false"
+            },
+            email: email,
+            createdAt: new Date().toISOString()
+        }, { merge: true });
+
         return { success: true, user: user };
     } catch (error) {
         return { success: false, errorMessage: getErrorMessage(error.code) };
@@ -62,7 +78,25 @@ export async function loginWithGoogle() {
     try {
         await setPersistence(auth, browserLocalPersistence);
         const result = await signInWithPopup(auth, googleProvider);
-        return { success: true, user: result.user };
+        const user = result.user;
+
+        // Check if new user, if so save basic Google info
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+            const names = user.displayName ? user.displayName.split(' ') : ["Student", "User"];
+            await setDoc(docRef, {
+                settings: {
+                    userFirstName: names[0],
+                    userLastName: names.slice(1).join(' ') || "",
+                    userProfileImage: user.photoURL
+                },
+                email: user.email
+            }, { merge: true });
+        }
+
+        return { success: true, user: user };
     } catch (error) {
         return { success: false, errorMessage: getErrorMessage(error.code) };
     }
@@ -108,5 +142,4 @@ onAuthStateChanged(auth, (user) => {
    }
 });
 
-// FIXED: Added 'updateDoc' to exports so settings.js can use it
-export { auth, db, doc, setDoc, getDoc, updateDoc };
+export { auth, db, doc, setDoc, getDoc, updateDoc, onAuthStateChanged };
