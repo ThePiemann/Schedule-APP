@@ -139,7 +139,7 @@ function setupEventListeners() {
     if (signOutBtn) {
         signOutBtn.addEventListener('click', async () => {
             await logoutUser();
-            window.location.href = 'login.html';
+            window.location.href = '/login';
         });
     }
 
@@ -150,7 +150,7 @@ function setupEventListeners() {
                 const result = await deleteUserAccount();
                 if (result.success) {
                     alert("Account deleted.");
-                    window.location.href = 'signup.html';
+                    window.location.href = '/signup';
                 } else {
                     alert("Error: " + result.errorMessage);
                 }

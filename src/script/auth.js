@@ -137,8 +137,8 @@ function getErrorMessage(code) {
 }
 
 onAuthStateChanged(auth, (user) => {
-   if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('signup.html'))) {
-       window.location.href = 'dashboard.html'; 
+   if (user && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
+       window.location.href = '/dashboard'; 
    }
 });
 
