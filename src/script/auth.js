@@ -7,12 +7,14 @@ import {
     createUserWithEmailAndPassword, 
     updateProfile, 
     onAuthStateChanged,
-    signOut
+    signOut,
+    GoogleAuthProvider, // ADDED
+    signInWithPopup     // ADDED
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-// ADDED: Import Firestore
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- PASTE YOUR FIREBASE CONFIG HERE IF IT'S DIFFERENT ---
 const firebaseConfig = {
     apiKey: "AIzaSyBU7EdAmfRqwXohjzU-9ZJ2uPCVKRDzXOw",
     authDomain: "studentdash-58a12.firebaseapp.com",
@@ -26,7 +28,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
-const db = getFirestore(app); // Initialize Firestore
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider(); // Initialize Google Provider
 
 export async function loginUser(email, password) {
     try {
@@ -48,6 +51,16 @@ export async function registerUser(email, password, username) {
     }
 }
 
+// NEW: Google Login Function
+export async function loginWithGoogle() {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        return { success: true, user: result.user };
+    } catch (error) {
+        return { success: false, errorMessage: getErrorMessage(error.code) };
+    }
+}
+
 export function logoutUser() {
     return signOut(auth);
 }
@@ -61,6 +74,7 @@ function getErrorMessage(code) {
         case 'auth/email-already-in-use': return "Email is already in use.";
         case 'auth/weak-password': return "Password should be at least 6 characters.";
         case 'auth/invalid-credential': return "Invalid credentials.";
+        case 'auth/popup-closed-by-user': return "Sign in cancelled.";
         default: return "An error occurred. Please try again.";
     }
 }
@@ -72,5 +86,4 @@ onAuthStateChanged(auth, (user) => {
    }
 });
 
-// Export everything needed for the dashboard
 export { auth, db, doc, setDoc, getDoc };
