@@ -55,7 +55,7 @@
         <div class="w-full max-w-md mx-auto my-auto">
             <h1 class="text-4xl font-serif font-black text-gray-900 dark:text-white mb-2">Create an account</h1>
             <p class="text-gray-600 dark:text-gray-400 mb-8">
-                Already have an account? <a href="/login" class="font-bold text-primary hover:underline">Log In</a>
+                Already have an account? <a href="/pages/login" class="font-bold text-primary hover:underline">Log In</a>
             </p>
 
             <button id="googleBtn" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition bg-white dark:bg-transparent font-bold text-gray-700 dark:text-gray-200 group mb-4">
@@ -124,6 +124,7 @@
         }
     </script>
     <script type="module">
+        // Fixed Import Path
         import { registerUser, loginWithGoogle } from '/src/script/auth.js';
         const form = document.getElementById('signupForm');
         const googleBtn = document.getElementById('googleBtn');
@@ -144,13 +145,27 @@
 
             btn.disabled = true; btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm align-middle mr-1">progress_activity</span> Creating...`; errorText.classList.add('hidden');
             const result = await registerUser(email, password, firstName, lastName);
-            if (result.success) { window.location.href = '/dashboard'; } 
-            else { errorText.innerText = result.errorMessage; errorText.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Create Account"; }
+            if (result.success) { 
+                // Fixed Redirect
+                window.location.href = '/pages/dashboard'; 
+            } 
+            else { 
+                errorText.innerText = result.errorMessage; 
+                errorText.classList.remove('hidden'); 
+                btn.disabled = false; 
+                btn.innerText = "Create Account"; 
+            }
         });
         googleBtn.addEventListener('click', async () => {
             const result = await loginWithGoogle();
-            if (result.success) { window.location.href = '/dashboard'; } 
-            else { errorText.innerText = result.errorMessage; errorText.classList.remove('hidden'); }
+            if (result.success) { 
+                // Fixed Redirect
+                window.location.href = '/pages/dashboard'; 
+            } 
+            else { 
+                errorText.innerText = result.errorMessage; 
+                errorText.classList.remove('hidden'); 
+            }
         });
     </script>
 </body>

@@ -17,8 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             // Redirect to login if not authenticated
-            if (!window.location.pathname.includes('login.html')) {
-                window.location.href = 'login.html';
+            // FIX: Check for path inclusion to support clean URLs
+            const path = window.location.pathname;
+            // Only redirect if we are NOT already on the login or signup page
+            if (!path.includes('/login') && !path.includes('/signup')) {
+                window.location.href = '/pages/login';
             }
         }
     });

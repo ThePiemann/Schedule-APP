@@ -136,9 +136,12 @@ function getErrorMessage(code) {
     }
 }
 
+// FIX: Flexible path checking and updated redirect
 onAuthStateChanged(auth, (user) => {
-   if (user && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
-       window.location.href = '/dashboard'; 
+   const path = window.location.pathname;
+   // Check if we are currently on the login or signup page
+   if (user && (path.includes('/login') || path.includes('/signup'))) {
+       window.location.href = '/pages/dashboard'; 
    }
 });
 

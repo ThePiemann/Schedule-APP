@@ -139,7 +139,8 @@ function setupEventListeners() {
     if (signOutBtn) {
         signOutBtn.addEventListener('click', async () => {
             await logoutUser();
-            window.location.href = '/login';
+            // FIXED PATH
+            window.location.href = '/pages/login';
         });
     }
 
@@ -150,7 +151,8 @@ function setupEventListeners() {
                 const result = await deleteUserAccount();
                 if (result.success) {
                     alert("Account deleted.");
-                    window.location.href = '/signup';
+                    // FIXED PATH
+                    window.location.href = '/pages/signup';
                 } else {
                     alert("Error: " + result.errorMessage);
                 }
