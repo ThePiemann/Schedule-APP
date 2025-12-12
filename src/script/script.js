@@ -20,13 +20,21 @@ let editingTodoId = null;
 let currentFilter = 'all'; 
 let todoToDeleteId = null; 
 
-let currentUser = null; // Store logged in user
+let currentUser = null; 
+
+// THE NEW DATABASE (Replaces LocalStorage)
+let userData = {
+    schedule: {},       // Stores class slots
+    advancedTodos: [],  // Stores tasks
+    subjectColors: {},  // Stores colors
+    settings: {}        // Stores user preferences
+};
 
 /* --------------------------
    FIREBASE SYNC LOGIC
    -------------------------- */
 
-// A. Load Data from Firestore
+// A. Load Data from Firestore (Runs on Login)
 async function loadUserData(user) {
     try {
         const docRef = doc(db, "users", user.uid);
@@ -35,92 +43,86 @@ async function loadUserData(user) {
         if (docSnap.exists()) {
             const data = docSnap.data();
             
-            // 1. Restore to LocalStorage
-            // Schedule
-            if (data.schedule) {
-                Object.keys(data.schedule).forEach(key => {
-                    localStorage.setItem(key, data.schedule[key]);
-                });
-            }
-            // Tasks
-            if (data.advancedTodos) {
-                localStorage.setItem('advancedTodos', data.advancedTodos);
-            }
-            // Settings/Colors
-            if (data.subjectColors) localStorage.setItem('subjectColors', data.subjectColors);
-            if (data.settings) {
-                Object.keys(data.settings).forEach(key => {
-                    localStorage.setItem(key, data.settings[key]);
-                });
+            // 1. Load Schedule
+            userData.schedule = data.schedule || {};
+
+            // 2. Load Tasks (Handle both String and Array for compatibility)
+            if (typeof data.advancedTodos === 'string') {
+                try { userData.advancedTodos = JSON.parse(data.advancedTodos); } catch(e) { userData.advancedTodos = []; }
+            } else {
+                userData.advancedTodos = data.advancedTodos || [];
             }
 
+            // 3. Load Colors
+            if (typeof data.subjectColors === 'string') {
+                try { userData.subjectColors = JSON.parse(data.subjectColors); } catch(e) { userData.subjectColors = {}; }
+            } else {
+                userData.subjectColors = data.subjectColors || {};
+            }
+
+            // 4. Load Settings
+            userData.settings = data.settings || {};
+
             console.log("Data loaded from Cloud");
-            // 2. Refresh UI
+            
+            // 5. Refresh UI
             refreshAllViews();
             loadTodos();
-            initWeekCounter(); // Re-calc with loaded settings
-            if (typeof loadTheme === 'function') loadTheme(); // Update theme if settings.js loaded
+            initWeekCounter();
+            
+            // Apply Theme if settings loaded
+            if (typeof loadTheme === 'function') loadTheme(); 
+
         } else {
-            console.log("No cloud data found. Using local.");
+            console.log("New user - starting with empty data.");
+            saveUserData(); // Create the document
         }
     } catch (e) {
         console.error("Error loading data:", e);
     }
 }
 
-// B. Save Data to Firestore
+// B. Save Data to Firestore (Runs on any change)
 async function saveUserData() {
     if (!currentUser) return;
 
+    // Prepare data for Cloud
+    // We stringify Todos/Colors to keep structure simple, or store as objects.
+    // Let's store as JSON strings to match your previous data structure logic
     const dataToSave = {
-        schedule: {},
-        advancedTodos: localStorage.getItem('advancedTodos') || '[]',
-        subjectColors: localStorage.getItem('subjectColors') || '{}',
-        settings: {},
+        schedule: userData.schedule,
+        advancedTodos: JSON.stringify(userData.advancedTodos),
+        subjectColors: JSON.stringify(userData.subjectColors),
+        // We generally don't overwrite settings from here unless modified here
+        // But for safety we can include what we have or use {merge:true}
         lastUpdated: new Date().toISOString()
     };
 
-    // Gather Schedule keys
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('schedule-')) {
-            dataToSave.schedule[key] = localStorage.getItem(key);
-        }
-        
-        // ADDED: 'userProfileImage' to this list
-        if (['userFirstName', 'userLastName', 'isDarkMode', 'isVibrant', 'showWeekCounter', 'isEvenOddEnabled', 'userProfileImage'].includes(key)) {
-            dataToSave.settings[key] = localStorage.getItem(key);
-        }
-    }
-
     try {
         await setDoc(doc(db, "users", currentUser.uid), dataToSave, { merge: true });
-        console.log("Saved to Cloud (including Profile Pic)...");
+        console.log("Saved to Cloud...");
     } catch (e) {
         console.error("Error saving data:", e);
     }
 }
 
-
 /* --------------------------
    INIT & LISTENERS
    -------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-    // Check Auth Status immediately
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
             console.log("Logged in as:", user.email);
-            // Load cloud data once on startup
             loadUserData(user); 
         } else {
-            // Protect Dashboard - redirect if not logged in
             window.location.href = 'login.html';
         }
     });
 
     initCalendar(); 
     currentOverviewDate = new Date(); 
+    // Wait for data load to init counters properly, but run once for defaults
     initWeekCounter(); 
     renderMonthCalendar(); 
     
@@ -224,13 +226,17 @@ function updateDateTime() {
 function initWeekCounter() {
     const div = document.getElementById('weekDisplay');
     if(!div) return;
-    const showCounter = localStorage.getItem('showWeekCounter') === 'true';
+    
+    // Read from global userData instead of localStorage
+    const showCounter = userData.settings['showWeekCounter'] === 'true';
     if (!showCounter) { div.classList.add('hidden'); return; }
+    
     div.classList.remove('hidden');
     const d = new Date();
     let weekNum = Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7);
     weekNum += 1; 
-    const invert = localStorage.getItem('weekParityInvert') === 'true';
+    
+    const invert = userData.settings['weekParityInvert'] === 'true';
     let isEven = (weekNum % 2 === 0);
     if (invert) isEven = !isEven;
     isEvenWeek = isEven; 
@@ -244,18 +250,26 @@ function initWeekCounter() {
 function getSubjectColor(subject) {
     if (!subject) return '#F3F4F6';
     const key = subject.trim().toUpperCase();
-    let colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
-    if (colorMap[key]) return colorMap[key];
+    
+    // Read from global userData
+    if (userData.subjectColors[key]) return userData.subjectColors[key];
+    
     const hue = Math.floor(Math.random() * 360);
     const newColor = `hsl(${hue}, 95%, 90%)`; 
-    colorMap[key] = newColor;
-    localStorage.setItem('subjectColors', JSON.stringify(colorMap));
+    
+    // Update global state and Save
+    userData.subjectColors[key] = newColor;
+    saveUserData(); 
+    
     return newColor;
 }
 
 function parseSlotData(rawData, defaultHour) {
     if (!rawData) return null;
     try {
+        // If it's already an object (from previous load), use it
+        if (typeof rawData === 'object') return rawData;
+
         if (rawData.startsWith('{')) {
             const data = JSON.parse(rawData);
             if(!data.type) data.type = "";
@@ -283,7 +297,8 @@ function showDailyOverview(dayIndex, dateObj) {
     let hasClass = false;
     let delayCounter = 0; 
     for (let h = startHour; h <= endHour; h++) {
-        const rawData = localStorage.getItem(`schedule-${dayIndex}-${h}`);
+        // Access global state
+        const rawData = userData.schedule[`schedule-${dayIndex}-${h}`];
         if (rawData) {
             const data = parseSlotData(rawData, h);
             hasClass = true;
@@ -338,7 +353,9 @@ function initCalendar() {
                 if(slot.classList.contains('just-dropped')) { slot.classList.remove('just-dropped'); return; }
                 openEventModal(slot);
             });
-            const rawData = localStorage.getItem(`schedule-${index}-${hour}`);
+            
+            // Access global state
+            const rawData = userData.schedule[`schedule-${index}-${hour}`];
             if(rawData) { 
                 const data = parseSlotData(rawData, hour);
                 slot.style.backgroundColor = data.color; 
@@ -377,14 +394,18 @@ function handleDrop(e) {
     const sourceKey = `schedule-${sourcePos.day}-${sourcePos.hour}`; const targetKey = `schedule-${targetDay}-${targetHour}`;
     if (sourcePos.day == targetDay && sourcePos.hour == targetHour) { document.querySelector(`.slot[data-day="${sourcePos.day}"][data-hour="${sourcePos.hour}"]`).style.opacity = '1'; return; }
     
-    const sourceRaw = localStorage.getItem(sourceKey); const targetRaw = localStorage.getItem(targetKey);
+    // Access global state
+    const sourceRaw = userData.schedule[sourceKey]; 
+    const targetRaw = userData.schedule[targetKey];
+    
     let sourceObj = sourceRaw ? parseSlotData(sourceRaw, parseInt(sourcePos.hour)) : null;
     if (sourceObj) { sourceObj.start = `${targetHour.toString().padStart(2,'0')}:00`; sourceObj.end = `${(targetHour+1).toString().padStart(2,'0')}:00`; }
     let targetObj = targetRaw ? parseSlotData(targetRaw, targetHour) : null;
     if (targetObj) { const sHour = parseInt(sourcePos.hour); targetObj.start = `${sHour.toString().padStart(2,'0')}:00`; targetObj.end = `${(sHour+1).toString().padStart(2,'0')}:00`; }
     
-    if (sourceObj) localStorage.setItem(targetKey, JSON.stringify(sourceObj)); else localStorage.removeItem(targetKey);
-    if (targetObj) localStorage.setItem(sourceKey, JSON.stringify(targetObj)); else localStorage.removeItem(sourceKey);
+    // Update global state
+    if (sourceObj) userData.schedule[targetKey] = JSON.stringify(sourceObj); else delete userData.schedule[targetKey];
+    if (targetObj) userData.schedule[sourceKey] = JSON.stringify(targetObj); else delete userData.schedule[sourceKey];
     
     this.classList.add('just-dropped'); 
     refreshAllViews();
@@ -397,14 +418,16 @@ function handleDrop(e) {
 function openEventModal(slot) { 
     currentSelectedSlot = slot; 
     const modal = document.getElementById('eventModal'); 
-    const isEvenOddEnabled = localStorage.getItem('isEvenOddEnabled') === 'true';
+    
+    // Use Global Settings
+    const isEvenOddEnabled = userData.settings['isEvenOddEnabled'] === 'true';
     const weekContainer = document.getElementById('weekTypeContainer');
     if(weekContainer) {
         if(isEvenOddEnabled) weekContainer.classList.remove('hidden');
         else weekContainer.classList.add('hidden');
     }
     const hour = parseInt(slot.dataset.hour);
-    const rawData = localStorage.getItem(`schedule-${slot.dataset.day}-${hour}`);
+    const rawData = userData.schedule[`schedule-${slot.dataset.day}-${hour}`];
     let data = { subject: "", start: `${hour.toString().padStart(2,'0')}:00`, end: `${(hour+1).toString().padStart(2,'0')}:00`, location: "", type: "", teacher: "", color: "#F3F4F6", weekType: "every" };
     if (rawData) data = parseSlotData(rawData, hour);
 
@@ -443,13 +466,14 @@ function saveEventFromModal() {
     const color = document.getElementById('selectedColorInput').value;
     const weekType = document.getElementById('weekTypeInput').value;
 
-    let colorMap = JSON.parse(localStorage.getItem('subjectColors') || '{}');
-    colorMap[subject] = color;
-    localStorage.setItem('subjectColors', JSON.stringify(colorMap));
+    // Save Color to Global State
+    userData.subjectColors[subject] = color;
 
     const eventData = { subject, start, end, location: loc, type, teacher, color, weekType };
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
-    localStorage.setItem(key, JSON.stringify(eventData));
+    
+    // Save Schedule to Global State
+    userData.schedule[key] = JSON.stringify(eventData);
     
     closeEventModal(); 
     refreshAllViews();
@@ -459,7 +483,7 @@ function saveEventFromModal() {
 function deleteEventFromModal() {
     if (!currentSelectedSlot) return;
     const key = `schedule-${currentSelectedSlot.dataset.day}-${currentSelectedSlot.dataset.hour}`;
-    localStorage.removeItem(key); 
+    delete userData.schedule[key]; 
     closeEventModal(); 
     refreshAllViews();
     saveUserData(); // SYNC TO FIREBASE
@@ -519,7 +543,7 @@ function initiateAddTodo() {
 }
 
 function initiateEditTodo(id) {
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    const todos = userData.advancedTodos;
     const todo = todos.find(t => t.id == id);
     if(!todo) return;
     editingTodoId = id;
@@ -557,7 +581,8 @@ function finalizeAddTodo() {
     let priority = 'med';
     const selectedP = document.querySelector('.p-btn.selected');
     if(selectedP) priority = selectedP.dataset.priority;
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    
+    const todos = userData.advancedTodos;
 
     let existingNote = "";
     if (editingTodoId) {
@@ -579,6 +604,7 @@ function finalizeAddTodo() {
         const todoObj = { id: Date.now(), text: nameVal, note: "", pinned: isPinned, deadlineISO: deadlineObj ? deadlineObj.toISOString() : "", deadlineText: deadlineObj ? deadlineObj.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "No Deadline", priority: priority };
         todos.push(todoObj);
     }
+    
     saveTodos(todos); 
     renderTodos(todos); 
     closeTodoModal(); 
@@ -587,8 +613,8 @@ function finalizeAddTodo() {
 }
 
 function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); document.getElementById('todoModal').classList.remove('flex'); }
-function saveTodos(todos) { localStorage.setItem('advancedTodos', JSON.stringify(todos)); }
-function loadTodos() { renderTodos(JSON.parse(localStorage.getItem('advancedTodos') || '[]')); }
+function saveTodos(todos) { userData.advancedTodos = todos; }
+function loadTodos() { renderTodos(userData.advancedTodos); }
 
 function renderTodos(todos) {
     const list = document.getElementById('todoList');
@@ -692,10 +718,8 @@ function closeDeleteModal() {
 
 function confirmDeleteTodo() {
     if(todoToDeleteId) {
-        let todos = JSON.parse(localStorage.getItem('advancedTodos'));
-        todos = todos.filter(t => t.id != todoToDeleteId);
-        saveTodos(todos);
-        renderTodos(todos);
+        userData.advancedTodos = userData.advancedTodos.filter(t => t.id != todoToDeleteId);
+        renderTodos(userData.advancedTodos);
         saveUserData(); // SYNC TO FIREBASE
     }
     closeDeleteModal();
@@ -703,7 +727,7 @@ function confirmDeleteTodo() {
 
 let currentNoteTodoId = null;
 function openNoteModal(id) {
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    const todos = userData.advancedTodos;
     const todo = todos.find(t => t.id == id);
     if (!todo) return;
     currentNoteTodoId = id;
@@ -716,7 +740,7 @@ function closeNoteModal() { document.getElementById('noteModal').classList.add('
 function saveNoteFromModal() {
     if (!currentNoteTodoId) return;
     const noteVal = document.getElementById('noteInput').value.trim();
-    const todos = JSON.parse(localStorage.getItem('advancedTodos') || '[]');
+    const todos = userData.advancedTodos;
     const index = todos.findIndex(t => t.id == currentNoteTodoId);
     if (index > -1) { 
         todos[index].note = noteVal; 
@@ -751,11 +775,13 @@ function renderMonthCalendar() {
         if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) { dayDiv.classList.add('today'); }
         if (currentOverviewDate && d === currentOverviewDate.getDate() && month === currentOverviewDate.getMonth() && year === currentOverviewDate.getFullYear()) { dayDiv.classList.add('selected-day'); }
         let dayOfWeek = new Date(year, month, d).getDay(); let arrayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; let hasClass = false;
-        for (let h = startHour; h <= endHour; h++) { if (localStorage.getItem(`schedule-${arrayIndex}-${h}`)) hasClass = true; }
+        for (let h = startHour; h <= endHour; h++) { if (userData.schedule[`schedule-${arrayIndex}-${h}`]) hasClass = true; }
         if (hasClass) { const dot = document.createElement('div'); dot.className = "class-dot"; dayDiv.appendChild(dot); }
         dayDiv.addEventListener('click', () => { document.querySelectorAll('.month-day').forEach(el => el.classList.remove('selected-day')); dayDiv.classList.add('selected-day'); currentOverviewDate = new Date(year, month, d); showDailyOverview(arrayIndex, currentOverviewDate); });
         grid.appendChild(dayDiv);
     }
 }
 
+// Make globally available if needed by settings.js or others
 window.saveUserData = saveUserData;
+window.initWeekCounter = initWeekCounter;

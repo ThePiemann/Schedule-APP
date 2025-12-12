@@ -8,13 +8,17 @@ import {
     updateProfile, 
     onAuthStateChanged,
     signOut,
-    GoogleAuthProvider, // ADDED
-    signInWithPopup     // ADDED
+    GoogleAuthProvider, 
+    signInWithPopup,
+    deleteUser,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// FIXED: Added 'updateDoc' to imports
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- PASTE YOUR FIREBASE CONFIG HERE IF IT'S DIFFERENT ---
 const firebaseConfig = {
     apiKey: "AIzaSyBU7EdAmfRqwXohjzU-9ZJ2uPCVKRDzXOw",
     authDomain: "studentdash-58a12.firebaseapp.com",
@@ -29,10 +33,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider(); // Initialize Google Provider
+const googleProvider = new GoogleAuthProvider(); 
 
-export async function loginUser(email, password) {
+export async function loginUser(email, password, remember = true) {
     try {
+        const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+        await setPersistence(auth, persistence);
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return { success: true, user: userCredential.user };
     } catch (error) {
@@ -42,6 +48,7 @@ export async function loginUser(email, password) {
 
 export async function registerUser(email, password, username) {
     try {
+        await setPersistence(auth, browserLocalPersistence);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         await updateProfile(user, { displayName: username });
@@ -51,9 +58,9 @@ export async function registerUser(email, password, username) {
     }
 }
 
-// NEW: Google Login Function
 export async function loginWithGoogle() {
     try {
+        await setPersistence(auth, browserLocalPersistence);
         const result = await signInWithPopup(auth, googleProvider);
         return { success: true, user: result.user };
     } catch (error) {
@@ -63,6 +70,22 @@ export async function loginWithGoogle() {
 
 export function logoutUser() {
     return signOut(auth);
+}
+
+export async function deleteUserAccount() {
+    try {
+        const user = auth.currentUser;
+        if (user) {
+            await deleteUser(user);
+            return { success: true };
+        }
+        return { success: false, errorMessage: "No user logged in." };
+    } catch (error) {
+        if (error.code === 'auth/requires-recent-login') {
+            return { success: false, errorMessage: "Please log out and log in again to delete your account." };
+        }
+        return { success: false, errorMessage: error.message };
+    }
 }
 
 function getErrorMessage(code) {
@@ -79,11 +102,11 @@ function getErrorMessage(code) {
     }
 }
 
-// Global Auth Listener to redirect IF on login pages
 onAuthStateChanged(auth, (user) => {
    if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('signup.html'))) {
        window.location.href = 'dashboard.html'; 
    }
 });
 
-export { auth, db, doc, setDoc, getDoc };
+// FIXED: Added 'updateDoc' to exports so settings.js can use it
+export { auth, db, doc, setDoc, getDoc, updateDoc };

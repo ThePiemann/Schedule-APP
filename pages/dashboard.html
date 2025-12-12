@@ -10,7 +10,6 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
@@ -18,7 +17,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="StudentDash">
     <link rel="apple-touch-icon" href="../src/images/studentDash-192.png">
-
     <link rel="icon" type="image/png" sizes="512x512" href="../src/images/studentDash.png">
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -26,8 +24,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7487029408349375"
-     crossorigin="anonymous"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -58,7 +54,6 @@
         </div>
         <div class="flex items-center gap-4">
             <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
-            
             <button id="settingsBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors" title="Settings">
                 <span class="material-symbols-outlined">settings</span>
             </button>
@@ -78,6 +73,7 @@
                 <div class="lg:col-span-5 flex flex-col gap-6 animate-slide-up delay-100">
                     <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300">
                         <h3 class="text-xl font-bold mb-4">My Tasks</h3>
+                        
                         <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-1 mb-4 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
                             <input type="text" id="todoInput" maxlength="25" class="w-full bg-transparent border-none focus:ring-0 p-3 text-sm" placeholder="Add task (max 25 chars)...">
                             <div class="flex justify-between items-center px-3 pb-2 pt-1 border-t border-gray-200 dark:border-gray-700 mt-1">
@@ -104,7 +100,7 @@
                                 <h3 id="calendarTitle" class="text-lg font-bold">Class Schedule</h3>
                                 <div id="monthNav" class="flex gap-1 items-center">
                                     <button id="prevMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full active:scale-90 transition"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-                                    <span id="currentMonthLabel" class="text-xs font-bold w-16 text-center">Oct 2023</span>
+                                    <span id="currentMonthLabel" class="text-xs font-bold w-16 text-center">...</span>
                                     <button id="nextMonth" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full active:scale-90 transition"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
                                 </div>
                             </div>
@@ -121,13 +117,7 @@
 
                         <div id="monthView" class="p-4 transition-all duration-300">
                             <div class="grid grid-cols-7 mb-2 text-center">
-                                <div class="text-[10px] font-bold text-gray-400">S</div>
-                                <div class="text-[10px] font-bold text-gray-400">M</div>
-                                <div class="text-[10px] font-bold text-gray-400">T</div>
-                                <div class="text-[10px] font-bold text-gray-400">W</div>
-                                <div class="text-[10px] font-bold text-gray-400">T</div>
-                                <div class="text-[10px] font-bold text-gray-400">F</div>
-                                <div class="text-[10px] font-bold text-gray-400">S</div>
+                                <div class="text-[10px] font-bold text-gray-400">S</div><div class="text-[10px] font-bold text-gray-400">M</div><div class="text-[10px] font-bold text-gray-400">T</div><div class="text-[10px] font-bold text-gray-400">W</div><div class="text-[10px] font-bold text-gray-400">T</div><div class="text-[10px] font-bold text-gray-400">F</div><div class="text-[10px] font-bold text-gray-400">S</div>
                             </div>
                             <div id="monthGrid" class="grid grid-cols-7 gap-y-1 gap-x-0"></div>
                             
@@ -168,7 +158,6 @@
     <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-5 animate-pop-in flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h3 class="text-lg font-bold mb-4">Edit Class Details</h3>
-            
             <div class="flex gap-2 mb-3">
                 <div class="flex-1">
                     <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject</label>
@@ -177,30 +166,22 @@
                 <div class="w-1/3">
                     <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Type</label>
                     <select id="eventTypeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none">
-                        <option value="">-</option>
-                        <option value="Lesson">Lesson</option>
-                        <option value="Exercise">Exercise</option>
-                        <option value="Lab">Lab</option>
-                        <option value="Exam">Exam</option>
+                        <option value="">-</option><option value="Lesson">Lesson</option><option value="Exercise">Exercise</option><option value="Lab">Lab</option><option value="Exam">Exam</option>
                     </select>
                 </div>
             </div>
-
             <div class="mb-3">
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Teacher Name</label>
                 <input type="text" id="eventTeacherInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Mr. Anderson">
             </div>
-
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label><input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
                 <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label><input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
             </div>
-
             <div class="mb-3">
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Location / Room</label>
                 <input type="text" id="locationInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm" placeholder="e.g. Room 302">
             </div>
-
             <div id="weekTypeContainer" class="mb-3 hidden">
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Frequency</label>
                 <div class="flex bg-gray-100 dark:bg-gray-800 rounded p-1">
@@ -210,7 +191,6 @@
                 </div>
                 <input type="hidden" id="weekTypeInput" value="every">
             </div>
-
             <div class="mb-6">
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Card Color</label>
                 <div class="flex flex-wrap gap-2" id="colorPalette">
@@ -231,7 +211,6 @@
                 </div>
                 <input type="hidden" id="selectedColorInput" value="#F3F4F6">
             </div>
-
             <div class="flex gap-3">
                 <button id="deleteEventBtn" class="flex-1 px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm hover:bg-red-200 transition">Clear</button>
                 <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Save</button>
@@ -242,7 +221,6 @@
 
     <div id="todoModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
-            
             <div class="flex justify-between items-center mb-4">
                 <h3 id="todoModalTitle" class="text-lg font-bold">New Task</h3>
                 <button id="todoModalPinBtn" class="text-gray-400 hover:text-primary transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700" title="Pin Task">
@@ -250,10 +228,8 @@
                 </button>
                 <input type="hidden" id="todoPinnedInput" value="false">
             </div>
-            
             <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Task Name</label>
             <input type="text" id="todoModalNameInput" maxlength="40" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="What needs to be done?">
-            
             <div class="grid grid-cols-2 gap-3 mb-6">
                 <div>
                     <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Deadline</label>
@@ -268,7 +244,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="flex gap-3">
                 <button id="cancelTodoBtn" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="saveTodoDetailsBtn" class="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition active:scale-95">Save Task</button>
@@ -279,9 +254,7 @@
     <div id="noteModal" class="fixed inset-0 z-[55] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary">description</span>Task Note</h3>
-            
             <textarea id="noteInput" rows="6" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none resize-none transition-all" placeholder="Write instructions, details or paste links here..."></textarea>
-            
             <div class="flex gap-3">
                 <button id="closeNoteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="saveNoteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:opacity-90 shadow-lg shadow-blue-500/30 transition">Save Note</button>
@@ -296,7 +269,6 @@
             </div>
             <h3 class="text-lg font-bold mb-2">Delete Task?</h3>
             <p class="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
-            
             <div class="flex gap-3">
                 <button id="cancelDeleteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="confirmDeleteBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30 transition">Delete</button>
@@ -336,34 +308,31 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="Student" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="User" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                     </div>
-                    <div class="mb-10"><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label><input type="email" readonly value="student.user@example.com" class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed"></div>
-                    <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <h4 class="text-lg font-bold mb-4">Password & Security</h4>
-                        <div class="space-y-4">
-                            <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Current Password</label><input type="password" readonly placeholder="••••••••" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">New Password</label><input type="password" readonly placeholder="New Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                                <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Confirm Password</label><input type="password" readonly placeholder="Confirm Password" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary cursor-default transition-all"></div>
-                            </div>
-                            <div class="flex justify-end mt-2"><button class="px-5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-lg hover:opacity-90 transition shadow-sm">Update Password</button></div>
-                        </div>
+                    <div class="mb-10">
+                        <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
+                        <input type="email" id="settingsEmailDisplay" readonly value="..." class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
                     </div>
 
                     <div class="pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
                         <h4 class="text-lg font-bold mb-4">Data Management</h4>
                         <div class="flex gap-4">
                             <button id="exportDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">download</span> Export Data
+                                <span class="material-symbols-outlined">download</span> Export
                             </button>
                             <button id="importDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">upload</span> Import Data
+                                <span class="material-symbols-outlined">upload</span> Import
                             </button>
                             <input type="file" id="importDataInput" hidden accept=".json">
                         </div>
-                        <p class="text-xs text-gray-400 mt-3">Export your data to a JSON file to transfer between devices.</p>
+                        <p class="text-xs text-gray-400 mt-3">Export/Import applies to Cloud Data.</p>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3">
+                        <button id="signOutBtn" class="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Sign Out</button>
+                        <button id="deleteAccountBtn" class="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition">Delete Account</button>
                     </div>
                 </div>
 
@@ -399,13 +368,25 @@
                             </div>
                             <label class="switch"><input type="checkbox" id="settingEvenOddToggle"><span class="slider"></span></label>
                         </div>
+                        
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold">Sync to Calendar App</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Export to Google/Apple Calendar for notifications</p>
+                                </div>
+                                <button onclick="downloadIcsFile()" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">
+                                    Export .ics
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="setSectionNotifications" class="settings-section hidden">
                     <h3 class="text-2xl font-bold mb-6">Notifications</h3>
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Push Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Push Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p></div><label class="switch"><input type="checkbox" id="settingNotifyToggle" checked><span class="slider"></span></label></div>
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Email Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive summaries via email</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                             <h4 class="font-bold mb-3">Alert Types</h4>
@@ -435,7 +416,7 @@
                             </div>
                             <p class="text-xs text-gray-500 mt-2">Used for buttons, toggles, and the Week Counter.</p>
                         </div>
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Reduce Motion</h4><p class="text-xs text-gray-500 mt-1">Minimize animations</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Reduce Motion</h4><p class="text-xs text-gray-500 mt-1">Minimize animations</p></div><label class="switch"><input type="checkbox" id="settingMotionToggle"><span class="slider"></span></label></div>
                     </div>
                 </div>
 
@@ -443,23 +424,9 @@
                     <h3 class="text-2xl font-bold mb-6">About</h3>
                     <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.5 (End of Life)</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
+                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.5</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
                     </div>
-                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-6 rounded-xl shadow-lg mb-6 relative overflow-hidden group">
-                        <div class="relative z-10 flex justify-between items-center">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Website Visits</p>
-                                <h4 id="analyticsTotalVisits" class="text-4xl font-black text-white tracking-tight">Loading...</h4>
-                                <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live Tracking
-                                </p>
-                            </div>
-                            <div class="bg-white/10 p-3 rounded-full backdrop-blur-sm">
-                                <span class="material-symbols-outlined text-3xl text-primary">bar_chart</span>
-                            </div>
-                        </div>
-                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition duration-500"></div>
-                    </div>
+                    
                     <div class="space-y-2">
                         <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Terms of Service</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
                         <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Privacy Policy</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
@@ -478,10 +445,8 @@
 
     <div id="pdfPreviewModal" class="fixed inset-0 z-[70] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
         <div class="bg-white dark:bg-card-dark w-full h-full md:h-[90vh] md:max-w-5xl md:rounded-xl shadow-2xl flex flex-col animate-pop-in overflow-hidden">
-            
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 justify-between items-center bg-gray-50 dark:bg-gray-800 shrink-0">
                 <h3 class="text-lg font-bold mr-2">Schedule Preview</h3>
-                
                 <div class="flex items-center gap-3 mr-auto bg-white dark:bg-gray-700 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600">
                     <label class="switch scale-75 md:scale-90">
                         <input type="checkbox" id="pdfTrimToggle"> 
@@ -490,7 +455,6 @@
                     <span class="text-xs md:text-sm font-bold text-gray-600 dark:text-gray-300 whitespace-nowrap">Full Day</span>
                 </div>
             </div>
-
             <div class="flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-900 custom-scrollbar text-center relative">
                 <div class="inline-block align-top min-h-full">
                     <div id="printContainer" class="bg-white text-gray-900 text-left shadow-lg p-8 rounded-lg origin-top-left">
@@ -503,7 +467,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-white dark:bg-card-dark shrink-0 pb-safe">
                 <button id="cancelPdfBtn" class="px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="confirmDownloadPdf" class="px-6 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition flex items-center gap-2">
@@ -544,9 +507,7 @@
 
     <script src="../src/script/weather.js"></script>
     <script src="../src/script/pdf.js"></script>
-    <script src="../src/script/settings.js"></script>
+    <script type="module" src="../src/script/settings.js"></script>
     <script type="module" src="../src/script/script.js"></script>
 </body>
-
 </html>
-

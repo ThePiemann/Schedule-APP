@@ -16,7 +16,7 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#4A90E2", // StudentDash Blue
+                        "primary": "#4A90E2",
                         "background-light": "#f6f7f8",
                         "background-dark": "#101a22",
                         "content-light": "#ffffff",
@@ -70,9 +70,7 @@
                                 <form id="loginForm" class="flex flex-col gap-6">
                                     <label class="flex flex-col w-full">
                                         <p class="text-base font-medium pb-2">Email Address</p>
-                                        <div class="flex w-full flex-1 items-stretch rounded-lg">
-                                            <input id="email" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="you@example.com" type="email" required />
-                                        </div>
+                                        <input id="email" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="you@example.com" type="email" required />
                                     </label>
                                     
                                     <label class="flex flex-col w-full">
@@ -87,7 +85,7 @@
 
                                     <div class="flex items-center justify-between">
                                         <label class="flex items-center gap-3 cursor-pointer">
-                                            <input class="h-5 w-5 rounded border-2 border-border-light text-primary focus:ring-primary" type="checkbox"/>
+                                            <input id="remember-me" class="h-5 w-5 rounded border-2 border-border-light text-primary focus:ring-primary" type="checkbox"/>
                                             <span class="text-base font-normal">Remember Me</span>
                                         </label>
                                         <a href="#" class="text-base font-medium text-primary hover:underline">Forgot Password?</a>
@@ -135,6 +133,7 @@
         const googleBtn = document.getElementById('googleBtn');
         const errorText = document.getElementById('errorMsg');
         const submitBtn = document.getElementById('submitBtn');
+        const rememberCheckbox = document.getElementById('remember-me');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -144,8 +143,9 @@
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const remember = rememberCheckbox.checked;
 
-            const result = await loginUser(email, password);
+            const result = await loginUser(email, password, remember);
 
             if (result.success) {
                 window.location.href = 'dashboard.html';
