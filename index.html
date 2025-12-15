@@ -6,7 +6,7 @@
     <title>StudentDash - The Ultimate Student Planner</title>
     <meta name="description" content="Master your academic life with the best schedule and task manager for students.">
     
-    <link rel="icon" type="image/png" href="/src/images/studentDash.png">
+    <link rel="icon" type="image/png" href="/images/studentDash.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -58,6 +58,8 @@
         .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
         .dark .glass-card { background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
+  <script type="module" crossorigin src="/assets/main-BUzrpGaG.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
 </head>
 <body class="font-sans bg-gray-50 dark:bg-darkbg text-gray-900 dark:text-white transition-colors duration-300 overflow-x-hidden">
 
@@ -79,7 +81,7 @@
             <div class="flex items-center gap-4">
                 
                 <div id="navLoginContainer">
-                    <a href="/pages/login" class="px-6 py-2.5 text-sm font-bold text-white bg-primary hover:bg-blue-600 rounded-full transition-all shadow-lg shadow-primary/30">
+                    <a href="/pages/login/" class="px-6 py-2.5 text-sm font-bold text-white bg-primary hover:bg-blue-600 rounded-full transition-all shadow-lg shadow-primary/30">
                         Log In
                     </a>
                 </div>
@@ -114,13 +116,13 @@
 
                             <h3 class="text-xl text-gray-800 dark:text-white font-normal mb-4">Hi, <span id="menuUserName" class="font-semibold">Student</span>!</h3>
 
-                            <a href="/pages/dashboard" class="inline-block px-6 py-2 rounded-full border border-gray-400 dark:border-gray-600 font-semibold text-xs text-primary hover:bg-white/50 dark:hover:bg-white/5 transition mb-2">
+                            <a href="/pages/dashboard/" class="inline-block px-6 py-2 rounded-full border border-gray-400 dark:border-gray-600 font-semibold text-xs text-primary hover:bg-white/50 dark:hover:bg-white/5 transition mb-2">
                                 Manage Account
                             </a>
                         </div>
 
                         <div class="mx-3 mb-3 bg-white dark:bg-[#303030] rounded-[20px] overflow-hidden shadow-sm">
-                            <a href="/pages/dashboard" class="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-gray-700/50 text-left group">
+                            <a href="/pages/dashboard/" class="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-gray-700/50 text-left group">
                                 <span class="material-symbols-outlined text-gray-500 group-hover:text-primary transition text-xl">dashboard</span>
                                 <div>
                                     <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Open Dashboard</p>
@@ -163,11 +165,11 @@
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                    <a href="/pages/dashboard" class="px-8 py-4 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-blue-600 shadow-xl shadow-primary/30 transition hover:-translate-y-1 flex items-center justify-center gap-2">
+                    <a href="/pages/dashboard/" class="px-8 py-4 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-blue-600 shadow-xl shadow-primary/30 transition hover:-translate-y-1 flex items-center justify-center gap-2">
                         Launch Dashboard
                         <span class="material-symbols-outlined">rocket_launch</span>
                     </a>
-                    <a href="/pages/signup" class="px-8 py-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-bold text-lg hover:border-primary transition hover:-translate-y-1">
+                    <a href="/pages/signup/" class="px-8 py-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-bold text-lg hover:border-primary transition hover:-translate-y-1">
                         Create Account
                     </a>
                 </div>
@@ -328,7 +330,7 @@
                 <div class="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
                 <h2 class="text-4xl font-black mb-6 relative z-10">Ready to Get Organized?</h2>
                 <p class="text-blue-100 text-lg mb-8 max-w-xl mx-auto relative z-10">Join thousands of students who have ditched the paper planner. It takes less than 30 seconds to set up.</p>
-                <a href="/pages/signup" class="inline-block px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition shadow-lg relative z-10">Create Free Account</a>
+                <a href="/pages/signup/" class="inline-block px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition shadow-lg relative z-10">Create Free Account</a>
             </div>
         </div>
     </section>
@@ -348,8 +350,7 @@
             </div>
         </div>
     </footer>
-
-    <script type="module" src="/src/script/index.js"></script>
+
 
 </body>
 </html>
