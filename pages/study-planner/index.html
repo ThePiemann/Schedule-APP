@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>StudentDash - Study Planner</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4A90E2">
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4A90E2",
+              "bg-light": "#F8F9FA",
+              "bg-dark": "#111518",
+              "card-light": "#FFFFFF",
+              "card-dark": "#1C2227",
+            },
+            fontFamily: { "display": ["Inter", "sans-serif"] },
+            animation: {
+                'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'slide-up': 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+            },
+            keyframes: {
+                popIn: { 
+                    '0%': { opacity: '0', transform: 'scale(0.9) translateY(10px)' }, 
+                    '100%': { opacity: '1', transform: 'scale(1) translateY(0)' } 
+                },
+                slideUp: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' }
+                }
+            }
+          },
+        },
+      }
+    </script>
+  <script type="module" crossorigin src="/assets/studyPlanner-DaddUcFE.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
+  <link rel="modulepreload" crossorigin href="/assets/store-BI9LHzMQ.js">
+  <link rel="stylesheet" crossorigin href="/assets/store-C7ZCaNIq.css">
+</head>
+<body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
+
+    <header class="shrink-0 flex items-center justify-between px-6 py-4 bg-card-light dark:bg-card-dark border-b border-gray-200 dark:border-gray-700 z-30">
+        <div class="flex items-center gap-3">
+            <button id="hamburgerBtn" class="mr-1 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none">
+                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-2xl">menu</span>
+            </button>
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/30 transform hover:rotate-12 transition duration-300">
+                <span class="material-symbols-outlined">school</span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">StudentDash</h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
+            <div id="navProfileContainer" class="relative">
+                <button id="profileDropdownBtn" class="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 p-0.5 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600 transition overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <img id="navProfileImg" src="" alt="Profile" class="w-full h-full rounded-full object-cover hidden">
+                    <div id="navProfileIcon" class="w-full h-full rounded-full bg-primary flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined text-2xl">person</span>
+                    </div>
+                </button>
+
+                <div id="profileDropdownMenu" class="absolute right-0 mt-2 w-80 bg-[#E9EEF6] dark:bg-[#1F1F1F] rounded-[24px] shadow-[0_4px_8px_3px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.3)] overflow-hidden hidden origin-top-right z-[100] animate-pop-in border border-white/50 dark:border-black/50">
+                    <button id="closeDropdownBtn" class="absolute top-3 right-3 p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                    <div class="flex flex-col items-center pt-8 pb-5 px-4 text-center">
+                        <p id="menuUserEmail" class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-4 bg-white/50 dark:bg-black/20 px-3 py-0.5 rounded-full">...</p>
+                        <div class="relative w-20 h-20 mb-3 group cursor-pointer">
+                            <img id="menuProfileImg" src="" class="w-full h-full rounded-full object-cover hidden border-4 border-white dark:border-[#1F1F1F] shadow-sm">
+                            <div id="menuProfileIcon" class="w-full h-full bg-primary rounded-full flex items-center justify-center text-white border-4 border-white dark:border-[#1F1F1F] shadow-sm">
+                                <span class="material-symbols-outlined text-4xl">person</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl text-gray-800 dark:text-white font-normal mb-4">Hi, <span id="menuUserName" class="font-semibold">Student</span>!</h3>
+                        <button id="dropdownManageBtn" class="inline-block px-6 py-2 rounded-full border border-gray-400 dark:border-gray-600 font-semibold text-xs text-primary hover:bg-white/50 dark:hover:bg-white/5 transition mb-2">Manage Account</button>
+                    </div>
+                    <div class="mx-3 mb-3 bg-white dark:bg-[#303030] rounded-[20px] overflow-hidden shadow-sm">
+                        <button id="dropdownSettingsBtn" class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-gray-700/50 text-left group">
+                            <span class="material-symbols-outlined text-gray-500 group-hover:text-primary transition text-xl">settings</span>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Settings</p>
+                        </button>
+                        <button id="menuSignOutBtn" class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition text-left group">
+                            <span class="material-symbols-outlined text-gray-500 group-hover:text-red-500 transition text-xl">logout</span>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-500 transition">Sign out</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-end animate-fade-in">
+                <h2 class="text-3xl font-black tracking-tight">Study Planner</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+                <!-- Timer Section -->
+                <div class="lg:col-span-1 flex flex-col gap-6 animate-slide-up delay-100">
+                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 flex flex-col items-center text-center">
+                        <h3 class="text-lg font-bold mb-6 uppercase tracking-widest text-gray-500">Focus Timer</h3>
+                        <div class="relative w-48 h-48 flex items-center justify-center mb-8">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-100 dark:text-gray-800"/>
+                                <circle id="timerProgress" cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="552.92" stroke-dashoffset="0" class="text-primary transition-all duration-500 ease-linear"/>
+                            </svg>
+                            <span id="timerDisplay" class="absolute text-4xl font-black tabular-nums">25:00</span>
+                        </div>
+                        
+                        <button id="addToScheduleBtn" class="mb-6 text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">calendar_add_on</span> Add Session to Schedule
+                        </button>
+
+                        <div class="flex gap-4 mb-8">
+                            <button id="startTimerBtn" class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-110 active:scale-95 transition">
+                                <span class="material-symbols-outlined">play_arrow</span>
+                            </button>
+                            <button id="pauseTimerBtn" class="hidden w-12 h-12 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-lg shadow-yellow-500/30 hover:scale-110 active:scale-95 transition">
+                                <span class="material-symbols-outlined">pause</span>
+                            </button>
+                            <button id="resetTimerBtn" class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:scale-110 active:scale-95 transition">
+                                <span class="material-symbols-outlined">refresh</span>
+                            </button>
+                        </div>
+                        <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-full">
+                            <button id="pomodoroMode" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white dark:bg-gray-700 shadow-sm transition">Pomodoro</button>
+                            <button id="shortBreakMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Short</button>
+                            <button id="longBreakMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Long</button>
+                            <button id="customMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Custom</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals Section -->
+                <div class="lg:col-span-2 flex flex-col gap-6 animate-slide-up delay-200">
+                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <h3 class="text-xl font-bold mb-4">Session Goals</h3>
+                        <div class="flex gap-2 mb-6">
+                            <input type="text" id="studyGoalInput" class="flex-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="What are you studying today?">
+                            <button id="addStudyGoalBtn" class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-blue-600 transition shadow-lg shadow-primary/30 active:scale-95">Add</button>
+                        </div>
+                        <div id="studyGoalsList" class="space-y-3"></div>
+                    </div>
+
+                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">Planned Sessions</h3>
+                        </div>
+                        
+                        <!-- Day Filter -->
+                        <div class="flex gap-1 overflow-x-auto no-scrollbar pb-4 mb-4 border-b border-gray-100 dark:border-gray-700/50">
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap bg-primary text-white" data-day="0">MON</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="1">TUE</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="2">WED</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="3">THU</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="4">FRI</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="5">SAT</button>
+                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="6">SUN</button>
+                        </div>
+
+                        <div id="studyDailyOverview" class="space-y-3">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <h3 class="text-xl font-bold mb-4">Quick Notes</h3>
+                        <textarea id="studyQuickNotes" class="w-full h-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary outline-none resize-none transition-all" placeholder="Jot down quick thoughts during your study session..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 z-[60] bg-black/50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
+
+    <!-- Sidebar -->
+    <aside id="appSidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-card-dark z-[70] transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col border-r border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+             <div class="flex items-center gap-2">
+                 <div class="w-7 h-7 bg-primary rounded-lg flex items-center justify-center text-white shadow-sm">
+                    <span class="material-symbols-outlined text-sm">school</span>
+                 </div>
+                 <h2 class="text-lg font-black tracking-tight text-gray-800 dark:text-gray-200">Menu</h2>
+             </div>
+             <button id="closeSidebarBtn" class="p-1 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                 <span class="material-symbols-outlined">close</span>
+             </button>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            <a href="/pages/dashboard/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">dashboard</span>
+                Dashboard
+            </a>
+            <a href="/pages/finance/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">payments</span>
+                 Finance
+            </a>
+            <a href="/pages/notes/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">description</span>
+                 Notes
+            </a>
+            <button class="w-full flex items-center gap-4 px-4 py-3 bg-primary/10 text-primary rounded-xl transition font-bold text-sm">
+                 <span class="material-symbols-outlined">auto_stories</span>
+                 Study Planner
+            </button>
+             <div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
+            <button id="sidebarSettingsBtn" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">settings</span>
+                 Settings
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Generic Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
+            <h3 id="confirmModalTitle" class="text-lg font-bold mb-2">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-sm text-gray-500 mb-6">Are you sure?</p>
+            <div class="flex gap-3">
+                <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal (Simplified for Study Planner) -->
+    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-5 animate-pop-in flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-lg font-bold mb-4">Add Study Time to Schedule</h3>
+            <div class="mb-3">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject / Topic</label>
+                <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math Study">
+            </div>
+            <div class="mb-3">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Day of Week</label>
+                <select id="eventDayInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none">
+                    <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label><input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
+                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label><input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
+            </div>
+            <div class="mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Card Color</label>
+                <div class="flex flex-wrap gap-2" id="colorPalette">
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFD1D1" data-color="#FFD1D1"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFE4C0" data-color="#FFE4C0"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFF5C2" data-color="#FFF5C2"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E4F9C2" data-color="#E4F9C2"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1F5D1" data-color="#D1F5D1"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#C2F9EB" data-color="#C2F9EB"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1E8FF" data-color="#D1E8FF"></button>
+                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F3F4F6" data-color="#F3F4F6"></button>
+                </div>
+                <input type="hidden" id="selectedColorInput" value="#F3F4F6">
+                <input type="hidden" id="eventTypeInput" value="Study">
+                <input type="hidden" id="eventTeacherInput" value="">
+                <input type="hidden" id="locationInput" value="">
+                <input type="hidden" id="weekTypeInput" value="every">
+            </div>
+            <div class="flex gap-3">
+                <button id="closeEventModal" class="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg font-bold text-sm hover:bg-gray-200 transition">Cancel</button>
+                <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Add to Schedule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
+        <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative animate-pop-in">
+            <button id="closeSettingsModal" class="absolute top-4 right-4 z-20 p-1 bg-white/50 dark:bg-black/20 rounded-full md:bg-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"><span class="material-symbols-outlined">close</span></button>
+            <aside class="w-full md:w-64 bg-gray-50 dark:bg-gray-900/50 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col shrink-0 z-10">
+                <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
+                <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
+                    <button id="setBtnAccount" class="settings-nav-item active"><span class="material-symbols-outlined icon">person</span>Account</button>
+                    <button id="setBtnStudy" class="settings-nav-item"><span class="material-symbols-outlined icon">timer</span>Study</button>
+                    <button id="setBtnSchedule" class="settings-nav-item"><span class="material-symbols-outlined icon">calendar_month</span>Schedule</button>
+                    <button id="setBtnNotifications" class="settings-nav-item"><span class="material-symbols-outlined icon">notifications</span>Notifications</button>
+                    <button id="setBtnTheme" class="settings-nav-item"><span class="material-symbols-outlined icon">palette</span>Theme</button>
+                    <button id="setBtnAbout" class="settings-nav-item"><span class="material-symbols-outlined icon">info</span>About</button>
+                </nav>
+            </aside>
+            <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative bg-card-light dark:bg-card-dark">
+                <div id="setSectionAccount" class="settings-section">
+                    <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
+                    <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+                        <div id="profileImageContainer" class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 shrink-0 overflow-hidden relative shadow-inner">
+                            <span id="defaultProfileIcon" class="material-symbols-outlined text-4xl">person</span>
+                            <img id="currentProfileImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <input type="file" id="uploadProfileInput" hidden accept="image/*">
+                            <button id="uploadProfileBtn" class="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-blue-600 transition shadow-sm shadow-primary/30">Upload New</button>
+                            <button id="removeProfileBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-red-500 font-bold text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">Remove</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
+                        <input type="email" id="settingsEmailDisplay" readonly value="..." class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                    </div>
+                    <div class="mb-10 flex justify-end"><button id="saveProfileBtn" class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">Save Changes</button></div>
+                    <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3">
+                        <button id="signOutBtn" class="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Sign Out</button>
+                        <button id="deleteAccountBtn" class="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition">Delete Account</button>
+                    </div>
+                </div>
+
+                <div id="setSectionStudy" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Study Settings</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Pomodoro Duration (min)</label>
+                            <input type="number" id="pomoDurationInput" placeholder="25" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Short Break Duration (min)</label>
+                            <input type="number" id="shortDurationInput" placeholder="5" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Long Break Duration (min)</label>
+                            <input type="number" id="longDurationInput" placeholder="15" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div class="pt-4">
+                            <button id="saveStudySettingsBtn" class="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-blue-600 transition shadow-lg shadow-primary/30">Save Timer Settings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setSectionSchedule" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Schedule Settings</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div><h4 class="font-bold">Show Week Counter</h4><p class="text-xs text-gray-500 mt-1">Display "Week: Odd/Even" on dashboard</p></div>
+                            <label class="switch"><input type="checkbox" id="settingShowWeekCounter"><span class="slider"></span></label>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div><h4 class="font-bold">Bi-Weekly Class Support</h4><p class="text-xs text-gray-500 mt-1">Enable "Even/Odd Only" options in class editor</p></div>
+                            <label class="switch"><input type="checkbox" id="settingEvenOddToggle"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setSectionNotifications" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Notifications</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Push Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p></div><label class="switch"><input type="checkbox" id="settingNotifyToggle" checked><span class="slider"></span></label></div>
+                    </div>
+                </div>
+
+                <div id="setSectionTheme" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Theme & Appearance</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold mb-1">Dark Mode</h4></div><label class="switch"><input type="checkbox" id="settingThemeToggle"><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Vibrant Mode</h4><p class="text-xs text-gray-500 mt-1">Enable gradients & glass effects in Dark Mode</p></div><label class="switch"><input type="checkbox" id="settingVibrantToggle"><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Show Weather Widget</h4><p class="text-xs text-gray-500 mt-1">Display local weather in sidebar</p></div><label class="switch"><input type="checkbox" id="settingWeatherToggle"><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Show Split Bill Tool</h4><p class="text-xs text-gray-500 mt-1">Enable bill splitter in Finance tab</p></div><label class="switch"><input type="checkbox" id="settingSplitBillToggle"><span class="slider"></span></label></div>
+                        
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-bold mb-3">Accent Color</h4>
+                            <div class="flex gap-4">
+                                <div class="theme-btn w-8 h-8 rounded-full bg-blue-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="blue"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-purple-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="purple"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="green"></div>
+                                <div class="theme-btn w-8 h-8 rounded-full bg-orange-500 cursor-pointer hover:scale-110 transition ring-offset-2 dark:ring-offset-gray-800" data-theme="orange"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Used for buttons, toggles, and the Week Counter.</p>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Reduce Motion</h4><p class="text-xs text-gray-500 mt-1">Minimize animations</p></div><label class="switch"><input type="checkbox" id="settingMotionToggle"><span class="slider"></span></label></div>
+                    </div>
+                </div>
+
+                <div id="setSectionAbout" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">About</h3>
+                    <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
+                        <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.6</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
+                    </div>
+                    <div class="mt-8 text-center"><p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Custom Timer Modal -->
+    <div id="customTimerModal" class="fixed inset-0 z-[110] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
+            <h3 class="text-lg font-bold mb-4">Set Custom Duration</h3>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Hours</label>
+                    <input type="number" id="customHoursInput" min="0" max="24" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="0">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Mins</label>
+                    <input type="number" id="customMinutesInput" min="0" max="59" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="25">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Secs</label>
+                    <input type="number" id="customSecondsInput" min="0" max="59" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="0">
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button id="closeCustomTimerBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="applyCustomTimerBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Set Timer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time's Up Modal -->
+    <div id="timesUpModal" class="fixed inset-0 z-[120] hidden bg-black/60 backdrop-blur-md items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-3xl shadow-2xl w-full max-w-sm p-8 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
+            <div class="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                <span class="material-symbols-outlined text-4xl">alarm_on</span>
+            </div>
+            <h3 class="text-2xl font-black mb-2">Time's Up!</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-8">Great job on your focus session. Take a well-deserved break!</p>
+            <button id="closeTimesUpBtn" class="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-blue-600 transition active:scale-95">Got it!</button>
+        </div>
+    </div>
+
+</body>
+</html>

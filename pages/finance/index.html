@@ -44,9 +44,9 @@
         },
       }
     </script>
-  <script type="module" crossorigin src="/assets/finance-COPhsCYe.js"></script>
+  <script type="module" crossorigin src="/assets/finance-DOScmVi1.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
-  <link rel="modulepreload" crossorigin href="/assets/store-C3fFsaMo.js">
+  <link rel="modulepreload" crossorigin href="/assets/store-BI9LHzMQ.js">
   <link rel="stylesheet" crossorigin href="/assets/store-C7ZCaNIq.css">
 </head>
 <body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
@@ -290,6 +290,10 @@
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">description</span>
                  Notes
             </a>
+            <a href="/pages/study-planner/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">auto_stories</span>
+                 Study Planner
+            </a>
              <div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
             <button id="sidebarSettingsBtn" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">settings</span>
@@ -365,6 +369,7 @@
                 <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
                 <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
                     <button id="setBtnAccount" class="settings-nav-item active"><span class="material-symbols-outlined icon">person</span>Account</button>
+                    <button id="setBtnStudy" class="settings-nav-item"><span class="material-symbols-outlined icon">timer</span>Study</button>
                     <button id="setBtnSchedule" class="settings-nav-item"><span class="material-symbols-outlined icon">calendar_month</span>Schedule</button>
                     <button id="setBtnNotifications" class="settings-nav-item"><span class="material-symbols-outlined icon">notifications</span>Notifications</button>
                     <button id="setBtnTheme" class="settings-nav-item"><span class="material-symbols-outlined icon">palette</span>Theme</button>
@@ -392,28 +397,39 @@
                         <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                         <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                     </div>
-                    <div class="mb-10">
+                    <div class="mb-6">
                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
                         <input type="email" id="settingsEmailDisplay" readonly value="..." class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
                     </div>
-
-                    <div class="pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
-                        <h4 class="text-lg font-bold mb-4">Data Management</h4>
-                        <div class="flex gap-4">
-                            <button id="exportDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">download</span> Export
-                            </button>
-                            <button id="importDataBtn" class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                <span class="material-symbols-outlined">upload</span> Import
-                            </button>
-                            <input type="file" id="importDataInput" hidden accept=".json">
-                        </div>
-                        <p class="text-xs text-gray-400 mt-3">Export/Import applies to Cloud Data.</p>
+                    
+                    <div class="mb-10 flex justify-end">
+                        <button id="saveProfileBtn" class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">Save Changes</button>
                     </div>
 
                     <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3">
                         <button id="signOutBtn" class="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Sign Out</button>
                         <button id="deleteAccountBtn" class="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition">Delete Account</button>
+                    </div>
+                </div>
+
+                <div id="setSectionStudy" class="settings-section hidden">
+                    <h3 class="text-2xl font-bold mb-6">Study Settings</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Pomodoro Duration (min)</label>
+                            <input type="number" id="pomoDurationInput" placeholder="25" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Short Break Duration (min)</label>
+                            <input type="number" id="shortDurationInput" placeholder="5" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Long Break Duration (min)</label>
+                            <input type="number" id="longDurationInput" placeholder="15" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div class="pt-4">
+                            <button id="saveStudySettingsBtn" class="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-blue-600 transition shadow-lg shadow-primary/30">Save Timer Settings</button>
+                        </div>
                     </div>
                 </div>
 
@@ -506,7 +522,7 @@
                     <h3 class="text-2xl font-bold mb-6">About</h3>
                     <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.5</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
+                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.6</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
                     </div>
                     
                     <div class="space-y-2">
@@ -603,6 +619,18 @@
             <div class="flex gap-3">
                 <button id="cancelDebtBtn" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="saveDebtBtn" class="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
+            <h3 id="confirmModalTitle" class="text-lg font-bold mb-2">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-sm text-gray-500 mb-6">Are you sure?</p>
+            <div class="flex gap-3">
+                <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
             </div>
         </div>
     </div>
