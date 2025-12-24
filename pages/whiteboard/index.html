@@ -3,12 +3,15 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>StudentDash - Study Planner</title>
+    <title>StudentDash - Whiteboard</title>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4A90E2">
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -28,23 +31,23 @@
             fontFamily: { "display": ["Inter", "sans-serif"] },
             animation: {
                 'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-                'slide-up': 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                'fade-in': 'fadeIn 0.3s ease-out forwards',
             },
             keyframes: {
                 popIn: { 
                     '0%': { opacity: '0', transform: 'scale(0.9) translateY(10px)' }, 
                     '100%': { opacity: '1', transform: 'scale(1) translateY(0)' } 
                 },
-                slideUp: {
-                    '0%': { opacity: '0', transform: 'translateY(20px)' },
-                    '100%': { opacity: '1', transform: 'translateY(0)' }
+                fadeIn: {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' }
                 }
             }
           },
         },
       }
     </script>
-  <script type="module" crossorigin src="/assets/studyPlanner-HMSaEfhq.js"></script>
+  <script type="module" crossorigin src="/assets/whiteboard-JzV28L_n.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
   <link rel="modulepreload" crossorigin href="/assets/store-B-09Ib52.js">
   <link rel="stylesheet" crossorigin href="/assets/store-C7ZCaNIq.css">
@@ -63,7 +66,11 @@
         </div>
         
         <div class="flex items-center gap-4">
-            <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
+            <div id="expirationTimer" class="hidden md:flex items-center gap-2 text-xs font-bold text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-3 py-1.5 rounded-full" title="Whiteboard auto-clears in 24 hours">
+                <span class="material-symbols-outlined text-sm">hourglass_top</span>
+                <span id="expirationText">24h Left</span>
+            </div>
+            
             <div id="navProfileContainer" class="relative">
                 <button id="profileDropdownBtn" class="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 p-0.5 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600 transition overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50">
                     <img id="navProfileImg" src="" alt="Profile" class="w-full h-full rounded-full object-cover hidden">
@@ -97,7 +104,6 @@
                             <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-500 transition">Sign out</p>
                         </button>
                     </div>
-
                     <div class="py-3 flex justify-center gap-3 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
                         <a href="/pages/privacy/" class="hover:underline">Privacy Policy</a>
                         <span>•</span>
@@ -108,89 +114,90 @@
         </div>
     </header>
 
-    <main class="flex-1 flex overflow-hidden">
-        <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-end animate-fade-in">
-                <h2 class="text-3xl font-black tracking-tight">Study Planner</h2>
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <!-- Toolbar -->
+        <div id="whiteboardToolbar" class="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 animate-pop-in cursor-move touch-none">
+            
+            <div class="flex gap-1 pr-2 border-r border-gray-200 dark:border-gray-700">
+                <button id="toolUndo" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Undo" disabled>
+                    <span class="material-symbols-outlined text-xl">undo</span>
+                </button>
+                <button id="toolRedo" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Redo" disabled>
+                    <span class="material-symbols-outlined text-xl">redo</span>
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
-                <!-- Timer Section -->
-                <div class="lg:col-span-1 flex flex-col gap-6 animate-slide-up delay-100">
-                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 flex flex-col items-center text-center">
-                        <h3 class="text-lg font-bold mb-6 uppercase tracking-widest text-gray-500">Focus Timer</h3>
-                        <div class="relative w-48 h-48 flex items-center justify-center mb-8">
-                            <svg class="w-full h-full transform -rotate-90">
-                                <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-100 dark:text-gray-800"/>
-                                <circle id="timerProgress" cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="552.92" stroke-dashoffset="0" class="text-primary transition-all duration-500 ease-linear"/>
-                            </svg>
-                            <span id="timerDisplay" class="absolute text-4xl font-black tabular-nums">25:00</span>
-                        </div>
-                        
-                        <button id="addToScheduleBtn" class="mb-6 text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">calendar_add_on</span> Add Session to Schedule
-                        </button>
+            <div class="flex gap-1 pr-2 border-r border-gray-200 dark:border-gray-700">
+                <button id="toolPen" class="tool-btn active w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 bg-primary/10 text-primary transition" title="Pen">
+                    <span class="material-symbols-outlined text-xl">edit</span>
+                </button>
+                <button id="toolHighlighter" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Highlighter">
+                    <span class="material-symbols-outlined text-xl">ink_highlighter</span>
+                </button>
+                <button id="toolEraser" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Eraser">
+                    <span class="material-symbols-outlined text-xl">ink_eraser</span>
+                </button>
+                <button id="addStickyBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Add Sticky Note">
+                    <span class="material-symbols-outlined text-xl">sticky_note_2</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-2 px-2 border-r border-gray-200 dark:border-gray-700">
+                <input type="color" id="colorPicker" value="#000000" class="w-7 h-7 rounded-full border-none cursor-pointer bg-transparent" title="Color">
+                <input type="range" id="lineWidth" min="1" max="20" value="3" class="w-20 accent-primary" title="Stroke Width">
+            </div>
 
-                        <div class="flex gap-4 mb-8">
-                            <button id="startTimerBtn" class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-110 active:scale-95 transition">
-                                <span class="material-symbols-outlined">play_arrow</span>
-                            </button>
-                            <button id="pauseTimerBtn" class="hidden w-12 h-12 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-lg shadow-yellow-500/30 hover:scale-110 active:scale-95 transition">
-                                <span class="material-symbols-outlined">pause</span>
-                            </button>
-                            <button id="resetTimerBtn" class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:scale-110 active:scale-95 transition">
-                                <span class="material-symbols-outlined">refresh</span>
-                            </button>
-                        </div>
-                        <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-full">
-                            <button id="pomodoroMode" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white dark:bg-gray-700 shadow-sm transition">Pomodoro</button>
-                            <button id="shortBreakMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Short</button>
-                            <button id="longBreakMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Long</button>
-                            <button id="customMode" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">Custom</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex gap-1 pl-1 relative">
+                <button id="clearBoardBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition" title="Clear Board">
+                    <span class="material-symbols-outlined text-xl">delete</span>
+                </button>
+                
+                <button id="exportDropdownBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Export">
+                    <span class="material-symbols-outlined text-xl">download</span>
+                </button>
 
-                <!-- Goals Section -->
-                <div class="lg:col-span-2 flex flex-col gap-6 animate-slide-up delay-200">
-                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                        <h3 class="text-xl font-bold mb-4">Session Goals</h3>
-                        <div class="flex gap-2 mb-6">
-                            <input type="text" id="studyGoalInput" class="flex-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="What are you studying today?">
-                            <button id="addStudyGoalBtn" class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-blue-600 transition shadow-lg shadow-primary/30 active:scale-95">Add</button>
-                        </div>
-                        <div id="studyGoalsList" class="space-y-3"></div>
-                    </div>
-
-                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">Planned Sessions</h3>
-                        </div>
-                        
-                        <!-- Day Filter -->
-                        <div class="flex gap-1 overflow-x-auto no-scrollbar pb-4 mb-4 border-b border-gray-100 dark:border-gray-700/50">
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap bg-primary text-white" data-day="0">MON</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="1">TUE</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="2">WED</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="3">THU</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="4">FRI</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="5">SAT</button>
-                            <button class="day-filter-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" data-day="6">SUN</button>
-                        </div>
-
-                        <div id="studyDailyOverview" class="space-y-3">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-
-                    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                        <h3 class="text-xl font-bold mb-4">Quick Notes</h3>
-                        <textarea id="studyQuickNotes" class="w-full h-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary outline-none resize-none transition-all" placeholder="Jot down quick thoughts during your study session..."></textarea>
-                    </div>
+                <div id="exportDropdown" class="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-1.5 hidden flex-col gap-1 w-40 z-50 animate-pop-in origin-top-right">
+                    <button id="downloadImageBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
+                        <span class="material-symbols-outlined text-lg text-primary">image</span>
+                        Save as Image
+                    </button>
+                    <button id="downloadPdfBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
+                        <span class="material-symbols-outlined text-lg text-red-500">picture_as_pdf</span>
+                        Save as PDF
+                    </button>
                 </div>
             </div>
         </div>
+
+        <div class="flex-1 relative bg-white dark:bg-[#1C1C1E] overflow-hidden cursor-crosshair touch-none" id="canvasContainer">
+            <canvas id="whiteboardCanvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+            <canvas id="tempCanvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
+            
+            <div id="notesContainer" class="absolute inset-0 z-20 pointer-events-none"></div>
+            
+            <!-- Instructions/Empty State -->
+            <div id="whiteboardPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50 select-none">
+                <span class="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">draw</span>
+                <p class="text-gray-400 dark:text-gray-500 font-medium">Start drawing anywhere</p>
+                <p class="text-xs text-gray-300 dark:text-gray-600 mt-2">Content disappears after 24 hours</p>
+            </div>
+        </div>
     </main>
+
+    <!-- Clear Modal -->
+    <div id="clearModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-2xl">delete_forever</span>
+            </div>
+            <h3 class="text-lg font-bold mb-2">Clear Whiteboard?</h3>
+            <p class="text-sm text-gray-500 mb-6">This will permanently remove your drawing.</p>
+            <div class="flex gap-3">
+                <button id="cancelClearBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmClearBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30 transition">Clear</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sidebar Overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 z-[60] bg-black/50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
@@ -221,14 +228,14 @@
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">description</span>
                  Notes
             </a>
-            <button class="w-full flex items-center gap-4 px-4 py-3 bg-primary/10 text-primary rounded-xl transition font-bold text-sm">
-                 <span class="material-symbols-outlined">auto_stories</span>
+            <a href="/pages/study-planner/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">auto_stories</span>
                  Study Planner
-            </button>
-            <a href="/pages/whiteboard/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
-                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">draw</span>
-                 Whiteboard
             </a>
+            <button class="w-full flex items-center gap-4 px-4 py-3 bg-primary/10 text-primary rounded-xl transition font-bold text-sm">
+                 <span class="material-symbols-outlined">draw</span>
+                 Whiteboard
+            </button>
              <div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
             <button id="sidebarSettingsBtn" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">settings</span>
@@ -237,65 +244,11 @@
         </nav>
     </aside>
 
-    <!-- Generic Confirmation Modal -->
-    <div id="confirmationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
-            <h3 id="confirmModalTitle" class="text-lg font-bold mb-2">Confirm Action</h3>
-            <p id="confirmModalMessage" class="text-sm text-gray-500 mb-6">Are you sure?</p>
-            <div class="flex gap-3">
-                <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Event Modal (Simplified for Study Planner) -->
-    <div id="eventModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-5 animate-pop-in flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <h3 class="text-lg font-bold mb-4">Add Study Time to Schedule</h3>
-            <div class="mb-3">
-                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Subject / Topic</label>
-                <input type="text" id="eventInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Math Study">
-            </div>
-            <div class="mb-3">
-                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Day of Week</label>
-                <select id="eventDayInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none">
-                    <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Start Time</label><input type="time" id="startTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
-                <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">End Time</label><input type="time" id="endTimeInput" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-sm"></div>
-            </div>
-            <div class="mb-6">
-                <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Card Color</label>
-                <div class="flex flex-wrap gap-2" id="colorPalette">
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFD1D1" data-color="#FFD1D1"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFE4C0" data-color="#FFE4C0"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#FFF5C2" data-color="#FFF5C2"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#E4F9C2" data-color="#E4F9C2"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1F5D1" data-color="#D1F5D1"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#C2F9EB" data-color="#C2F9EB"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#D1E8FF" data-color="#D1E8FF"></button>
-                    <button type="button" class="color-btn w-6 h-6 rounded-full ring-2 ring-transparent hover:scale-110 transition shadow-sm" style="background:#F3F4F6" data-color="#F3F4F6"></button>
-                </div>
-                <input type="hidden" id="selectedColorInput" value="#F3F4F6">
-                <input type="hidden" id="eventTypeInput" value="Study">
-                <input type="hidden" id="eventTeacherInput" value="">
-                <input type="hidden" id="locationInput" value="">
-                <input type="hidden" id="weekTypeInput" value="every">
-            </div>
-            <div class="flex gap-3">
-                <button id="closeEventModal" class="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg font-bold text-sm hover:bg-gray-200 transition">Cancel</button>
-                <button id="saveEventBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-600 shadow-sm shadow-primary/30 transition">Add to Schedule</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
+    <!-- Settings Modal (Shared) -->
     <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
         <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative animate-pop-in">
             <button id="closeSettingsModal" class="absolute top-4 right-4 z-20 p-1 bg-white/50 dark:bg-black/20 rounded-full md:bg-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"><span class="material-symbols-outlined">close</span></button>
+            
             <aside class="w-full md:w-64 bg-gray-50 dark:bg-gray-900/50 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col shrink-0 z-10">
                 <h2 class="text-xl font-black mb-4 md:mb-8 text-gray-800 dark:text-gray-200">Settings</h2>
                 <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
@@ -307,7 +260,10 @@
                     <button id="setBtnAbout" class="settings-nav-item"><span class="material-symbols-outlined icon">info</span>About</button>
                 </nav>
             </aside>
+
             <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative bg-card-light dark:bg-card-dark">
+                <div class="md:hidden h-6"></div> 
+                
                 <div id="setSectionAccount" class="settings-section">
                     <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
                     <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
@@ -322,14 +278,18 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
-                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
+                        <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                     </div>
                     <div class="mb-6">
                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
                         <input type="email" id="settingsEmailDisplay" readonly value="..." class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
                     </div>
-                    <div class="mb-10 flex justify-end"><button id="saveProfileBtn" class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">Save Changes</button></div>
+                    
+                    <div class="mb-10 flex justify-end">
+                        <button id="saveProfileBtn" class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">Save Changes</button>
+                    </div>
+
                     <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3">
                         <button id="signOutBtn" class="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Sign Out</button>
                         <button id="deleteAccountBtn" class="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition">Delete Account</button>
@@ -361,12 +321,45 @@
                     <h3 class="text-2xl font-bold mb-6">Schedule Settings</h3>
                     <div class="space-y-6">
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div><h4 class="font-bold">Show Week Counter</h4><p class="text-xs text-gray-500 mt-1">Display "Week: Odd/Even" on dashboard</p></div>
+                            <div>
+                                <h4 class="font-bold">Show Week Counter</h4>
+                                <p class="text-xs text-gray-500 mt-1">Display "Week: Odd/Even" on dashboard</p>
+                            </div>
                             <label class="switch"><input type="checkbox" id="settingShowWeekCounter"><span class="slider"></span></label>
                         </div>
+
+                        <div id="weekParityControl" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 opacity-50 pointer-events-none transition-opacity">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-bold">Current Week Status</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Is this week Odd or Even?</p>
+                                </div>
+                                <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                                    <button id="setWeekOddBtn" class="px-4 py-1 text-xs font-bold rounded-md transition">ODD</button>
+                                    <button id="setWeekEvenBtn" class="px-4 py-1 text-xs font-bold rounded-md transition">EVEN</button>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-400">This manually overrides the calculation to match your school's calendar.</p>
+                        </div>
+
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div><h4 class="font-bold">Bi-Weekly Class Support</h4><p class="text-xs text-gray-500 mt-1">Enable "Even/Odd Only" options in class editor</p></div>
+                            <div>
+                                <h4 class="font-bold">Bi-Weekly Class Support</h4>
+                                <p class="text-xs text-gray-500 mt-1">Enable "Even/Odd Only" options in class editor</p>
+                            </div>
                             <label class="switch"><input type="checkbox" id="settingEvenOddToggle"><span class="slider"></span></label>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold">Sync to Calendar App</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Export to Google/Apple Calendar for notifications</p>
+                                </div>
+                                <button onclick="downloadIcsFile()" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-sm hover:bg-blue-600 transition">
+                                    Export .ics
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -375,6 +368,15 @@
                     <h3 class="text-2xl font-bold mb-6">Notifications</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Push Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive alerts on this device</p></div><label class="switch"><input type="checkbox" id="settingNotifyToggle" checked><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Email Notifications</h4><p class="text-xs text-gray-500 mt-1">Receive summaries via email</p></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-bold mb-3">Alert Types</h4>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Task Deadlines</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Class Reminders (15m before)</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm font-medium">Daily Summary</span></label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -412,48 +414,44 @@
                         <a href="/pages/privacy/" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Privacy Policy</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
                         <a href="#" class="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex justify-between items-center group"><span class="font-semibold text-sm">Third-Party Licenses</span><span class="material-symbols-outlined text-gray-400 group-hover:text-gray-600 text-sm">open_in_new</span></a>
                     </div>
-
-                    <div class="mt-8 text-center"><p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p></div>
+                    <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-bold text-sm mb-2">Credits</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Created by <span class="font-bold text-primary">A Broke College Student</span></p>
+                        <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 text-[10px] text-gray-400"><span>Tailwind CSS</span> • <span>html2canvas</span> • <span>jsPDF</span> • <span>Cropper.js</span> • <span>Open-Meteo</span></div>
+                    </div>
+                    <div class="mt-8 text-center"><button class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition">Check for Updates</button><p class="text-xs text-gray-400 mt-4">© 2025 StudentDash. All rights reserved.</p></div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Custom Timer Modal -->
-    <div id="customTimerModal" class="fixed inset-0 z-[110] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+    <!-- Generic Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
-            <h3 class="text-lg font-bold mb-4">Set Custom Duration</h3>
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Hours</label>
-                    <input type="number" id="customHoursInput" min="0" max="24" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="0">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Mins</label>
-                    <input type="number" id="customMinutesInput" min="0" max="59" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="25">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Secs</label>
-                    <input type="number" id="customSecondsInput" min="0" max="59" class="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xl font-bold text-center outline-none" value="0">
-                </div>
-            </div>
+            <h3 id="confirmModalTitle" class="text-lg font-bold mb-2">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-sm text-gray-500 mb-6">Are you sure?</p>
             <div class="flex gap-3">
-                <button id="closeCustomTimerBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="applyCustomTimerBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Set Timer</button>
+                <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Time's Up Modal -->
-    <div id="timesUpModal" class="fixed inset-0 z-[120] hidden bg-black/60 backdrop-blur-md items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-3xl shadow-2xl w-full max-w-sm p-8 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
-            <div class="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-                <span class="material-symbols-outlined text-4xl">alarm_on</span>
-            </div>
-            <h3 class="text-2xl font-black mb-2">Time's Up!</h3>
-            <p class="text-gray-500 dark:text-gray-400 mb-8">Great job on your focus session. Take a well-deserved break!</p>
-            <button id="closeTimesUpBtn" class="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-blue-600 transition active:scale-95">Got it!</button>
+    <!-- Sticky Note Context Menu -->
+    <div id="stickyContextMenu" class="fixed z-[999] hidden bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-1.5 flex-col min-w-[160px] animate-pop-in origin-top-left">
+        <div class="grid grid-cols-5 gap-1 p-2 border-b border-gray-100 dark:border-gray-700 mb-1">
+            <button class="w-5 h-5 rounded-full bg-yellow-100 hover:scale-110 transition color-select" data-color="#FEF3C7"></button>
+            <button class="w-5 h-5 rounded-full bg-green-100 hover:scale-110 transition color-select" data-color="#DCFCE7"></button>
+            <button class="w-5 h-5 rounded-full bg-blue-100 hover:scale-110 transition color-select" data-color="#DBEAFE"></button>
+            <button class="w-5 h-5 rounded-full bg-red-100 hover:scale-110 transition color-select" data-color="#FEE2E2"></button>
+            <button class="w-5 h-5 rounded-full bg-purple-100 hover:scale-110 transition color-select" data-color="#F3E8FF"></button>
         </div>
+        <button id="ctxDuplicate" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
+            <span class="material-symbols-outlined text-base">content_copy</span> Duplicate
+        </button>
+        <button id="ctxDelete" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 text-xs font-bold transition w-full text-left">
+            <span class="material-symbols-outlined text-base">delete</span> Delete
+        </button>
     </div>
 
 </body>
