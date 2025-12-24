@@ -44,7 +44,7 @@
         },
       }
     </script>
-  <script type="module" crossorigin src="/assets/finance-ByKIq9SK.js"></script>
+  <script type="module" crossorigin src="/assets/finance-B_1g0I0y.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
   <link rel="modulepreload" crossorigin href="/assets/store-B-09Ib52.js">
   <link rel="stylesheet" crossorigin href="/assets/store-C7ZCaNIq.css">
@@ -136,7 +136,7 @@
             <!-- Top Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up delay-100">
                 <div class="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                         <span class="material-symbols-outlined text-8xl text-primary">account_balance_wallet</span>
                     </div>
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Balance</p>
@@ -148,18 +148,31 @@
                 </div>
 
                 <div class="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                         <span class="material-symbols-outlined text-8xl text-red-500">shopping_bag</span>
                     </div>
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Spent This Month</p>
                     <h3 id="monthlySpentDisplay" class="text-3xl font-black text-gray-800 dark:text-white">$0.00</h3>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mt-4 overflow-hidden">
-                        <div id="budgetProgressBar" class="bg-red-500 h-full rounded-full" style="width: 0%"></div>
+                    
+                    <div class="mt-4">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Monthly Budget</span>
+                            <div class="flex items-center gap-1">
+                                <span id="monthlyBudgetDisplay" class="text-[10px] font-bold text-gray-600 dark:text-gray-300">$100.00</span>
+                                <button id="editBudgetBtn" class="text-gray-400 hover:text-primary transition p-0.5 rounded-full" title="Edit Budget">
+                                    <span class="material-symbols-outlined text-[12px]">edit</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden shadow-inner">
+                            <div id="budgetProgressBar" class="bg-red-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 italic">* Percentage of your $100.00 monthly limit</p>
                     </div>
                 </div>
 
                 <div class="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                         <span class="material-symbols-outlined text-8xl text-purple-500">calendar_today</span>
                     </div>
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Recurring Bills</p>
@@ -526,7 +539,7 @@
                     <h3 class="text-2xl font-bold mb-6">About</h3>
                     <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.6</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
+                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.7</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
                     </div>
                     
                     <div class="space-y-2">
@@ -635,6 +648,21 @@
             <div class="flex gap-3">
                 <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
                 <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Modal -->
+    <div id="budgetModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold mb-4">Set Monthly Budget</h3>
+            <div class="mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Budget Limit ($)</label>
+                <input type="number" id="budgetInput" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-lg font-bold focus:ring-2 focus:ring-primary outline-none" placeholder="100.00" step="0.01">
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelBudgetBtn" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="saveBudgetBtn" class="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition">Save</button>
             </div>
         </div>
     </div>
