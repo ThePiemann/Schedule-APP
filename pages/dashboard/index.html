@@ -51,10 +51,10 @@
         },
       }
     </script>
-  <script type="module" crossorigin src="/assets/dashboard-w8pzcvb0.js"></script>
+  <script type="module" crossorigin src="/assets/dashboard-CNt9PAKz.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
-  <link rel="modulepreload" crossorigin href="/assets/store-B-09Ib52.js">
-  <link rel="stylesheet" crossorigin href="/assets/store-C7ZCaNIq.css">
+  <link rel="modulepreload" crossorigin href="/assets/store-B1XsjTCK.js">
+  <link rel="stylesheet" crossorigin href="/assets/store-DtC4AZzH.css">
 </head>
 <body class="font-display bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 h-screen flex flex-col overflow-hidden transition-colors duration-200">
 
@@ -73,59 +73,46 @@
             <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
             
             <div id="navProfileContainer" class="relative">
-                <button id="profileDropdownBtn" class="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 p-0.5 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600 transition overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50">
-                    <img id="navProfileImg" src="" alt="Profile" class="w-full h-full rounded-full object-cover hidden">
-                    <div id="navProfileIcon" class="w-full h-full rounded-full bg-primary flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined text-2xl">person</span>
+                <button id="profileDropdownBtn" class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary/50 transition focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
+                        <img id="navProfileImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                        <div id="navProfileIcon" class="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                            <span class="material-symbols-outlined text-lg">person</span>
+                        </div>
                     </div>
+                    <span class="material-symbols-outlined text-gray-400 text-lg pr-1">expand_more</span>
                 </button>
 
-                <div id="profileDropdownMenu" class="absolute right-0 mt-2 w-80 bg-[#E9EEF6] dark:bg-[#1F1F1F] rounded-[24px] shadow-[0_4px_8px_3px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.3)] overflow-hidden hidden origin-top-right z-50 animate-pop-in border border-white/50 dark:border-black/50">
-                    
-                    <button id="closeDropdownBtn" class="absolute top-3 right-3 p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition">
-                        <span class="material-symbols-outlined text-lg">close</span>
-                    </button>
-
-                    <div class="flex flex-col items-center pt-8 pb-5 px-4 text-center">
-                        <p id="menuUserEmail" class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-4 bg-white/50 dark:bg-black/20 px-3 py-0.5 rounded-full">...</p>
-                        
-                        <div class="relative w-20 h-20 mb-3 group cursor-pointer">
-                            <img id="menuProfileImg" src="" class="w-full h-full rounded-full object-cover hidden border-4 border-white dark:border-[#1F1F1F] shadow-sm">
-                            <div id="menuProfileIcon" class="w-full h-full bg-primary rounded-full flex items-center justify-center text-white border-4 border-white dark:border-[#1F1F1F] shadow-sm">
-                                <span class="material-symbols-outlined text-4xl">person</span>
+                <div id="profileDropdownMenu" class="absolute right-0 mt-3 w-72 bg-white dark:bg-[#1A1F2E] rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden hidden origin-top-right z-50 border border-gray-100 dark:border-gray-800 animate-pop-in">
+                    <div class="p-4 border-b border-gray-100 dark:border-gray-800 relative">
+                        <button id="closeDropdownBtn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/30 flex items-center justify-center text-primary overflow-hidden">
+                                <img id="menuProfileImg" src="" class="w-full h-full object-cover hidden">
+                                <div id="menuProfileIcon" class="flex items-center justify-center w-full h-full">
+                                    <span class="material-symbols-outlined text-2xl">person</span>
+                                </div>
                             </div>
-                            <div class="absolute bottom-0 right-0 bg-white dark:bg-gray-800 p-1.5 rounded-full shadow-md border border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-primary text-xs">photo_camera</span>
+                            <div>
+                                <h4 class="font-bold text-gray-900 dark:text-white text-base">Hi, <span id="menuUserName">Student</span></h4>
+                                <p id="menuUserEmail" class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]">...</p>
                             </div>
                         </div>
-
-                        <h3 class="text-xl text-gray-800 dark:text-white font-normal mb-4">Hi, <span id="menuUserName" class="font-semibold">Student</span>!</h3>
-
-                        <button id="dropdownManageBtn" class="inline-block px-6 py-2 rounded-full border border-gray-400 dark:border-gray-600 font-semibold text-xs text-primary hover:bg-white/50 dark:hover:bg-white/5 transition mb-2">
-                            Manage Account
+                    </div>
+                    <div class="p-2">
+                        <button id="dropdownSettingsBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-200 transition group text-left">
+                            <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">settings</span>
+                            <span class="font-medium text-sm">Settings</span>
                         </button>
                     </div>
-
-                    <div class="mx-3 mb-3 bg-white dark:bg-[#303030] rounded-[20px] overflow-hidden shadow-sm">
-                        <button id="dropdownSettingsBtn" class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-gray-700/50 text-left group">
-                            <span class="material-symbols-outlined text-gray-500 group-hover:text-primary transition text-xl">settings</span>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Settings</p>
-                            </div>
-                        </button>
-
-                        <button id="menuSignOutBtn" class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition text-left group">
-                            <span class="material-symbols-outlined text-gray-500 group-hover:text-red-500 transition text-xl">logout</span>
-                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-500 transition">Sign out</p>
+                    <div class="p-2 border-t border-gray-100 dark:border-gray-800">
+                        <button id="menuSignOutBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition group text-left">
+                            <span class="material-symbols-outlined group-hover:text-red-600 transition">logout</span>
+                            <span class="font-medium text-sm">Sign Out</span>
                         </button>
                     </div>
-
-                    <div class="py-3 flex justify-center gap-3 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                        <a href="/pages/privacy/" class="hover:underline">Privacy Policy</a>
-                        <span>•</span>
-                        <a href="/pages/terms/" class="hover:underline">Terms of Service</a>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -226,7 +213,7 @@
         </div>
     </main>
     
-    <div id="settingsModal" class="fixed inset-0 z-[60] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
+    <div id="settingsModal" class="fixed inset-0 z-[3000] hidden bg-black/60 backdrop-blur-sm items-center justify-center md:p-4">
         <div class="bg-white dark:bg-card-dark md:rounded-xl shadow-2xl w-full max-w-4xl h-full md:h-[600px] md:max-h-full flex flex-col md:flex-row overflow-hidden relative animate-pop-in">
             <button id="closeSettingsModal" class="absolute top-4 right-4 z-20 p-1 bg-white/50 dark:bg-black/20 rounded-full md:bg-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"><span class="material-symbols-outlined">close</span></button>
             
@@ -262,7 +249,7 @@
                         <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">First Name</label><input type="text" id="firstNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                         <div><label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Last Name</label><input type="text" id="lastNameInput" value="" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all"></div>
                     </div>
-                    <div class="mb-6">
+                    <div class="mb-10">
                         <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Email</label>
                         <input type="email" id="settingsEmailDisplay" readonly value="..." class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed">
                     </div>
@@ -364,6 +351,20 @@
                 <div id="setSectionTheme" class="settings-section hidden">
                     <h3 class="text-2xl font-bold mb-6">Theme & Appearance</h3>
                     <div class="space-y-6">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <label class="text-xs font-bold text-gray-500 mb-2 block uppercase">Preferred Currency</label>
+                            <select id="currencySelect" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="JPY">JPY (¥)</option>
+                                <option value="CAD">CAD ($)</option>
+                                <option value="AUD">AUD ($)</option>
+                                <option value="INR">INR (₹)</option>
+                                <option value="KHR">KHR (៛)</option>
+                            </select>
+                            <p class="text-[10px] text-gray-400 mt-2">Values will be converted automatically based on market rates when you save profile changes.</p>
+                        </div>
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold mb-1">Dark Mode</h4></div><label class="switch"><input type="checkbox" id="settingThemeToggle"><span class="slider"></span></label></div>
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Vibrant Mode</h4><p class="text-xs text-gray-500 mt-1">Enable gradients & glass effects in Dark Mode</p></div><label class="switch"><input type="checkbox" id="settingVibrantToggle"><span class="slider"></span></label></div>
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"><div><h4 class="font-bold">Show Weather Widget</h4><p class="text-xs text-gray-500 mt-1">Display local weather in sidebar</p></div><label class="switch"><input type="checkbox" id="settingWeatherToggle"><span class="slider"></span></label></div>
@@ -387,7 +388,7 @@
                     <h3 class="text-2xl font-bold mb-6">About</h3>
                     <div class="bg-primary/10 p-6 rounded-xl border border-primary/20 mb-6 flex items-start gap-4">
                         <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.7</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
+                        <div><h4 class="text-lg font-bold text-primary mb-2">StudentDash v1.8</h4><p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">The ultimate dashboard for students who want to organize their life without the clutter.</p></div>
                     </div>
                     
                     <div class="space-y-2">
@@ -621,6 +622,10 @@
             <a href="/pages/study-planner/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">auto_stories</span>
                  Study Planner
+            </a>
+            <a href="/pages/hobby-tracker/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">checklist</span>
+                 Daily Tracker
             </a>
             <a href="/pages/whiteboard/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">draw</span>

@@ -3,15 +3,12 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>StudentDash - Whiteboard</title>
+    <title>StudentDash - Daily Tracker</title>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4A90E2">
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -31,23 +28,23 @@
             fontFamily: { "display": ["Inter", "sans-serif"] },
             animation: {
                 'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-                'fade-in': 'fadeIn 0.3s ease-out forwards',
+                'slide-up': 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
             },
             keyframes: {
                 popIn: { 
                     '0%': { opacity: '0', transform: 'scale(0.9) translateY(10px)' }, 
                     '100%': { opacity: '1', transform: 'scale(1) translateY(0)' } 
                 },
-                fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' }
+                slideUp: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' }
                 }
             }
           },
         },
       }
     </script>
-  <script type="module" crossorigin src="/assets/whiteboard-DU65QlNY.js"></script>
+  <script type="module" crossorigin src="/assets/hobbyTracker-0Fw7YaRz.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/auth-cbFyKSDW.js">
   <link rel="modulepreload" crossorigin href="/assets/store-B1XsjTCK.js">
   <link rel="stylesheet" crossorigin href="/assets/store-DtC4AZzH.css">
@@ -66,11 +63,7 @@
         </div>
         
         <div class="flex items-center gap-4">
-            <div id="expirationTimer" class="hidden md:flex items-center gap-2 text-xs font-bold text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-3 py-1.5 rounded-full" title="Whiteboard auto-clears in 24 hours">
-                <span class="material-symbols-outlined text-sm">hourglass_top</span>
-                <span id="expirationText">24h Left</span>
-            </div>
-            
+            <div id="datetimeDisplay" class="hidden md:block text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">...</div>
             <div id="navProfileContainer" class="relative">
                 <button id="profileDropdownBtn" class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary/50 transition focus:outline-none focus:ring-2 focus:ring-primary/50">
                     <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
@@ -82,7 +75,7 @@
                     <span class="material-symbols-outlined text-gray-400 text-lg pr-1">expand_more</span>
                 </button>
 
-                <div id="profileDropdownMenu" class="absolute right-0 mt-3 w-72 bg-white dark:bg-[#1A1F2E] rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden hidden origin-top-right z-[1500] border border-gray-100 dark:border-gray-800 animate-pop-in">
+                <div id="profileDropdownMenu" class="absolute right-0 mt-3 w-72 bg-white dark:bg-[#1A1F2E] rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden hidden origin-top-right z-[100] border border-gray-100 dark:border-gray-800 animate-pop-in">
                     <div class="p-4 border-b border-gray-100 dark:border-gray-800 relative">
                         <button id="closeDropdownBtn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                             <span class="material-symbols-outlined text-lg">close</span>
@@ -117,174 +110,36 @@
         </div>
     </header>
 
-    <input type="file" id="imageUploadInput" hidden accept="image/*">
-    <main class="flex-1 flex flex-col overflow-hidden relative">
-        <!-- DESKTOP Toolbar (Horizontal, Top Center) -->
-        <div id="whiteboardToolbarDesktop" class="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-[1000] items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 animate-pop-in cursor-move touch-none">
-            
-            <button id="minimizeToolbarBtn" class="w-6 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition mr-1 border-r border-gray-200 dark:border-gray-700" title="Minimize">
-                <span class="material-symbols-outlined text-lg">remove</span>
-            </button>
-
-            <div class="flex gap-1 pr-2 border-r border-gray-200 dark:border-gray-700 toolbar-content">
-                <button id="toolUndo" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Undo" disabled>
-                    <span class="material-symbols-outlined text-xl">undo</span>
-                </button>
-                <button id="toolRedo" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Redo" disabled>
-                    <span class="material-symbols-outlined text-xl">redo</span>
+    <main class="flex-1 flex overflow-hidden relative">
+        <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center md:items-end animate-fade-in">
+                <h2 class="text-2xl md:text-3xl font-black tracking-tight">Daily Life Tracker</h2>
+                <button id="addHobbyBtn" class="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 transition shadow-lg shadow-primary/30 active:scale-95">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Add Item</span>
                 </button>
             </div>
 
-            <div class="flex gap-1 pr-2 border-r border-gray-200 dark:border-gray-700">
-                <button id="toolPen" class="tool-btn active w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 bg-primary/10 text-primary transition" title="Pen">
-                    <span class="material-symbols-outlined text-xl">draw</span>
-                </button>
-                <button id="toolHighlighter" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Highlighter">
-                    <span class="material-symbols-outlined text-xl">ink_highlighter</span>
-                </button>
-                <button id="toolEraser" class="tool-btn w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Eraser">
-                    <span class="material-symbols-outlined text-xl">ink_eraser</span>
-                </button>
-                <button id="addStickyBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Add Sticky Note">
-                    <span class="material-symbols-outlined text-xl">sticky_note_2</span>
-                </button>
-                <button id="addImageBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Add Image">
-                    <span class="material-symbols-outlined text-xl">add_photo_alternate</span>
-                </button>
-            </div>
-            
-            <div class="flex items-center gap-2 px-2 border-r border-gray-200 dark:border-gray-700">
-                <div class="relative w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-600 overflow-hidden hover:scale-110 transition-transform cursor-pointer" title="Color">
-                    <input type="color" id="colorPicker" value="#000000" class="absolute -top-2 -left-2 w-16 h-16 p-0 border-0 cursor-pointer opacity-0 z-10">
-                    <div id="colorPreview" class="w-full h-full bg-black pointer-events-none"></div>
-                </div>
-                <input type="range" id="lineWidth" min="1" max="20" value="3" class="w-20 accent-primary" title="Stroke Width">
-            </div>
-
-            <div class="flex gap-1 pl-1 relative">
-                <button id="toggleFullscreenBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Toggle Fullscreen">
-                    <span class="material-symbols-outlined text-xl">fullscreen</span>
-                </button>
-                <button id="clearBoardBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition" title="Clear Board">
-                    <span class="material-symbols-outlined text-xl">delete</span>
-                </button>
-                
-                <button id="exportDropdownBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Export">
-                    <span class="material-symbols-outlined text-xl">download</span>
-                </button>
-
-                <div id="exportDropdown" class="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-1.5 hidden flex-col gap-1 w-40 z-50 animate-pop-in origin-top-right">
-                    <button id="downloadImageBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
-                        <span class="material-symbols-outlined text-lg text-primary">image</span>
-                        Save as Image
-                    </button>
-                    <button id="downloadPdfBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
-                        <span class="material-symbols-outlined text-lg text-red-500">picture_as_pdf</span>
-                        Save as PDF
-                    </button>
+            <div id="hobbiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24 md:pb-10">
+                <!-- Hobbies will be populated here -->
+                <div class="lg:col-span-3 text-center py-20 opacity-50">
+                    <span class="material-symbols-outlined text-6xl mb-4">checklist</span>
+                    <p class="text-lg font-bold">Initializing your daily tracker...</p>
                 </div>
             </div>
         </div>
 
-        <!-- MOBILE Toolbar (Vertical, Bottom Right, Hidden by default) -->
-        <div id="whiteboardToolbarMobile" class="hidden md:hidden absolute bottom-24 right-6 z-[1000] flex-col items-center gap-1.5 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-pop-in max-h-[70vh] overflow-y-auto no-scrollbar">
-            
-            <!-- Undo/Redo Group -->
-            <div class="flex flex-col gap-1.5 pb-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
-                <button id="toolUndoMobile" class="tool-btn-mobile w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Undo">
-                    <span class="material-symbols-outlined text-xl">undo</span>
-                </button>
-                <button id="toolRedoMobile" class="tool-btn-mobile w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30" title="Redo">
-                    <span class="material-symbols-outlined text-xl">redo</span>
-                </button>
-            </div>
-
-            <!-- Tools Group -->
-            <div class="flex flex-col gap-1.5 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
-                <button id="toolPenMobile" class="tool-btn-mobile active w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 bg-primary/10 text-primary transition" title="Pen">
-                    <span class="material-symbols-outlined text-xl">draw</span>
-                </button>
-                <button id="toolHighlighterMobile" class="tool-btn-mobile w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Highlighter">
-                    <span class="material-symbols-outlined text-xl">ink_highlighter</span>
-                </button>
-                <button id="toolEraserMobile" class="tool-btn-mobile w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Eraser">
-                    <span class="material-symbols-outlined text-xl">ink_eraser</span>
-                </button>
-                <button id="addStickyBtnMobile" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Add Sticky Note">
-                    <span class="material-symbols-outlined text-xl">sticky_note_2</span>
-                </button>
-                <button id="addImageBtnMobile" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Add Image">
-                    <span class="material-symbols-outlined text-xl">add_photo_alternate</span>
-                </button>
-            </div>
-            
-            <!-- Settings Group -->
-            <div class="flex flex-col items-center gap-2 py-1.5 border-b border-gray-200 dark:border-gray-700">
-                <div class="relative w-7 h-7 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-600 overflow-hidden hover:scale-110 transition-transform cursor-pointer shrink-0" title="Color">
-                    <input type="color" id="colorPickerMobile" value="#000000" class="absolute -top-2 -left-2 w-16 h-16 p-0 border-0 cursor-pointer opacity-0 z-10">
-                    <div id="colorPreviewMobile" class="w-full h-full bg-black pointer-events-none"></div>
-                </div>
-                <!-- Vertical Slider -->
-                <div class="h-16 flex items-center justify-center py-1">
-                     <input type="range" id="lineWidthMobile" min="1" max="20" value="3" class="w-16 h-1 accent-primary bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer origin-center -rotate-90 translate-x-0" title="Stroke Width">
-                </div>
-            </div>
-
-            <!-- Actions Group -->
-            <div class="flex flex-col gap-1.5 pt-1.5 relative">
-                <button id="toggleFullscreenBtnMobile" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Toggle Fullscreen">
-                    <span class="material-symbols-outlined text-xl">fullscreen</span>
-                </button>
-                <button id="clearBoardBtnMobile" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition" title="Clear Board">
-                    <span class="material-symbols-outlined text-xl">delete</span>
-                </button>
-                
-                <button id="exportDropdownBtnMobile" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Export">
-                    <span class="material-symbols-outlined text-xl">download</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Toggle FAB -->
-        <button id="mobileMenuBtn" class="md:hidden absolute bottom-6 right-6 z-[1001] w-12 h-12 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-white/20">
-            <span class="material-symbols-outlined text-xl">edit</span>
+        <!-- Mobile FAB -->
+        <button id="addHobbyBtnMobile" class="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-primary text-white rounded-full shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-3xl">add</span>
         </button>
-
-        <div class="flex-1 relative bg-white overflow-hidden cursor-crosshair touch-none" id="canvasContainer">
-            <canvas id="whiteboardCanvas" class="absolute inset-0 w-full h-full z-0"></canvas>
-            <canvas id="tempCanvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
-            
-            <div id="notesContainer" class="absolute inset-0 z-20 pointer-events-none"></div>
-            
-            <!-- Instructions/Empty State -->
-            <div id="whiteboardPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50 select-none">
-                <span class="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">draw</span>
-                <p class="text-gray-400 dark:text-gray-500 font-medium">Start drawing anywhere</p>
-                <p class="text-xs text-gray-300 dark:text-gray-600 mt-2">Content disappears after 24 hours</p>
-            </div>
-        </div>
     </main>
 
-    <!-- Clear Modal -->
-    <div id="clearModal" class="fixed inset-0 z-[2000] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
-            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="material-symbols-outlined text-2xl">delete_forever</span>
-            </div>
-            <h3 class="text-lg font-bold mb-2">Clear Whiteboard?</h3>
-            <p class="text-sm text-gray-500 mb-6">This will permanently remove your drawing.</p>
-            <div class="flex gap-3">
-                <button id="cancelClearBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="confirmClearBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30 transition">Clear</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Sidebar Overlay -->
-    <div id="sidebarOverlay" class="fixed inset-0 z-[2000] bg-black/50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 z-[60] bg-black/50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
 
     <!-- Sidebar -->
-    <aside id="appSidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-card-dark z-[2100] transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col border-r border-gray-200 dark:border-gray-700">
+    <aside id="appSidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-card-dark z-[70] transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col border-r border-gray-200 dark:border-gray-700">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
              <div class="flex items-center gap-2">
                  <div class="w-7 h-7 bg-primary rounded-lg flex items-center justify-center text-white shadow-sm">
@@ -313,14 +168,14 @@
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">auto_stories</span>
                  Study Planner
             </a>
-            <a href="/pages/hobby-tracker/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
-                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">checklist</span>
-                 Daily Tracker
-            </a>
             <button class="w-full flex items-center gap-4 px-4 py-3 bg-primary/10 text-primary rounded-xl transition font-bold text-sm">
-                 <span class="material-symbols-outlined">draw</span>
-                 Whiteboard
+                 <span class="material-symbols-outlined">checklist</span>
+                 Daily Tracker
             </button>
+            <a href="/pages/whiteboard/" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
+                 <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">draw</span>
+                 Whiteboard
+            </a>
              <div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
             <button id="sidebarSettingsBtn" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition font-semibold text-sm group">
                  <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition">settings</span>
@@ -524,68 +379,29 @@
         </div>
     </div>
 
-    <!-- Generic Confirmation Modal -->
-    <div id="confirmationModal" class="fixed inset-0 z-[2000] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-sm p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700 text-center">
-            <h3 id="confirmModalTitle" class="text-lg font-bold mb-2">Confirm Action</h3>
-            <p id="confirmModalMessage" class="text-sm text-gray-500 mb-6">Are you sure?</p>
-            <div class="flex gap-3">
-                <button id="cancelConfirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                <button id="confirmModalBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-blue-600 shadow-lg shadow-primary/30 transition">Confirm</button>
+    <!-- Hobby Modal -->
+    <div id="hobbyModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-pop-in border border-gray-100 dark:border-gray-700">
+            <h3 id="hobbyModalTitle" class="text-lg font-bold mb-4">Add Item</h3>
+            <div class="mb-3">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Item Name</label>
+                <input type="text" id="hobbyNameInput" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="e.g. Read for 30 mins">
             </div>
-        </div>
-    </div>
-
-    <!-- Sticky Note Context Menu -->
-    <div id="stickyContextMenu" class="fixed z-[1500] hidden bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-1.5 flex-col min-w-[160px] animate-pop-in origin-top-left">
-        <div class="grid grid-cols-5 gap-1 p-2 border-b border-gray-100 dark:border-gray-700 mb-1">
-            <button class="w-5 h-5 rounded-full bg-yellow-100 hover:scale-110 transition color-select" data-color="#FEF3C7"></button>
-            <button class="w-5 h-5 rounded-full bg-green-100 hover:scale-110 transition color-select" data-color="#DCFCE7"></button>
-            <button class="w-5 h-5 rounded-full bg-blue-100 hover:scale-110 transition color-select" data-color="#DBEAFE"></button>
-            <button class="w-5 h-5 rounded-full bg-red-100 hover:scale-110 transition color-select" data-color="#FEE2E2"></button>
-            <button class="w-5 h-5 rounded-full bg-purple-100 hover:scale-110 transition color-select" data-color="#F3E8FF"></button>
-        </div>
-        <button id="ctxDuplicate" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200 text-xs font-bold transition w-full text-left">
-            <span class="material-symbols-outlined text-base">content_copy</span> Duplicate
-        </button>
-        <button id="ctxDelete" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 text-xs font-bold transition w-full text-left">
-            <span class="material-symbols-outlined text-base">delete</span> Delete
-        </button>
-    </div>
-
-    <!-- Mobile Export Modal (Bottom Sheet) -->
-    <div id="mobileExportModal" class="fixed inset-0 z-[2000] hidden md:hidden flex-col justify-end">
-        <!-- Backdrop -->
-        <div id="mobileExportBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity opacity-0"></div>
-        <!-- Sheet -->
-        <div class="relative w-full bg-white dark:bg-[#1C1C1E] rounded-t-3xl p-6 flex flex-col gap-4 shadow-2xl border-t border-white/10 transform translate-y-full transition-transform duration-300 ease-out" id="mobileExportSheet">
-            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-2 opacity-50"></div>
-            <h3 class="text-xl font-bold text-center text-gray-800 dark:text-white mb-2">Export Whiteboard</h3>
-            
-            <button id="mobileExportImageBtn" class="w-full flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-all group">
-                <div class="w-12 h-12 rounded-full bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span class="material-symbols-outlined text-2xl">image</span>
+            <div class="mb-4">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Choose Icon</label>
+                <div id="iconSelectorGrid" class="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-1 custom-scrollbar">
+                    <!-- Icons will be populated by JS -->
                 </div>
-                <div class="text-left">
-                    <p class="font-bold text-gray-800 dark:text-gray-100 text-lg">Save as Image</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">High quality PNG for sharing</p>
-                </div>
-            </button>
-
-            <button id="mobileExportPdfBtn" class="w-full flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-all group">
-                <div class="w-12 h-12 rounded-full bg-red-100/50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span class="material-symbols-outlined text-2xl">picture_as_pdf</span>
-                </div>
-                <div class="text-left">
-                    <p class="font-bold text-gray-800 dark:text-gray-100 text-lg">Save as PDF</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Best for printing or documents</p>
-                </div>
-            </button>
-
-            <button id="mobileExportCancelBtn" class="w-full py-4 mt-2 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-95">
-                Cancel
-            </button>
-            <div class="h-4"></div> <!-- Safe area -->
+                <input type="hidden" id="hobbyIconInput" value="star">
+            </div>
+            <div class="mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Weekly Goal (days)</label>
+                <input type="number" id="hobbyGoalInput" class="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="7">
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelHobbyBtn" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button id="saveHobbyBtn" class="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/30 transition">Save</button>
+            </div>
         </div>
     </div>
 
